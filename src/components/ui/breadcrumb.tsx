@@ -1,17 +1,23 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { ChevronRight, MoreHorizontal } from "lucide-react"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { ChevronRight, MoreHorizontal } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
+/**
+ * Breadcrumb nav container, provides ARIA label for accessibility.
+ */
 const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<"nav"> & {
-    separator?: React.ReactNode
+    separator?: React.ReactNode;
   }
->(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />)
-Breadcrumb.displayName = "Breadcrumb"
+>(({ ...props }, ref) => <nav ref={ref} aria-label="breadcrumb" {...props} />);
+Breadcrumb.displayName = "Breadcrumb";
 
+/**
+ * Breadcrumb ordered list, handles responsive and accessible styles.
+ */
 const BreadcrumbList = React.forwardRef<
   HTMLOListElement,
   React.ComponentPropsWithoutRef<"ol">
@@ -24,9 +30,12 @@ const BreadcrumbList = React.forwardRef<
     )}
     {...props}
   />
-))
-BreadcrumbList.displayName = "BreadcrumbList"
+));
+BreadcrumbList.displayName = "BreadcrumbList";
 
+/**
+ * Breadcrumb list item.
+ */
 const BreadcrumbItem = React.forwardRef<
   HTMLLIElement,
   React.ComponentPropsWithoutRef<"li">
@@ -36,27 +45,32 @@ const BreadcrumbItem = React.forwardRef<
     className={cn("inline-flex items-center gap-1.5", className)}
     {...props}
   />
-))
-BreadcrumbItem.displayName = "BreadcrumbItem"
+));
+BreadcrumbItem.displayName = "BreadcrumbItem";
 
+/**
+ * Breadcrumb link with option to render as a child element.
+ */
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<"a"> & {
-    asChild?: boolean
+    asChild?: boolean;
   }
 >(({ asChild, className, ...props }, ref) => {
-  const Comp = asChild ? Slot : "a"
-
+  const Comp = asChild ? Slot : "a";
   return (
     <Comp
       ref={ref}
       className={cn("transition-colors hover:text-foreground", className)}
       {...props}
     />
-  )
-})
-BreadcrumbLink.displayName = "BreadcrumbLink"
+  );
+});
+BreadcrumbLink.displayName = "BreadcrumbLink";
 
+/**
+ * Breadcrumb current page element.
+ */
 const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
   React.ComponentPropsWithoutRef<"span">
@@ -69,9 +83,12 @@ const BreadcrumbPage = React.forwardRef<
     className={cn("font-normal text-foreground", className)}
     {...props}
   />
-))
-BreadcrumbPage.displayName = "BreadcrumbPage"
+));
+BreadcrumbPage.displayName = "BreadcrumbPage";
 
+/**
+ * Breadcrumb separator, defaults to ChevronRight icon.
+ */
 const BreadcrumbSeparator = ({
   children,
   className,
@@ -85,9 +102,12 @@ const BreadcrumbSeparator = ({
   >
     {children ?? <ChevronRight />}
   </li>
-)
-BreadcrumbSeparator.displayName = "BreadcrumbSeparator"
+);
+BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
+/**
+ * Breadcrumb ellipsis for overflow, uses MoreHorizontal icon and screen reader text.
+ */
 const BreadcrumbEllipsis = ({
   className,
   ...props
@@ -101,8 +121,8 @@ const BreadcrumbEllipsis = ({
     <MoreHorizontal className="h-4 w-4" />
     <span className="sr-only">More</span>
   </span>
-)
-BreadcrumbEllipsis.displayName = "BreadcrumbElipssis"
+);
+BreadcrumbEllipsis.displayName = "BreadcrumbEllipsis";
 
 export {
   Breadcrumb,
@@ -112,4 +132,4 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
-}
+};
