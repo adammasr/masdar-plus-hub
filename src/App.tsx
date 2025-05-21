@@ -1,3 +1,4 @@
+import AdminUsers from "./pages/admin/Users";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
