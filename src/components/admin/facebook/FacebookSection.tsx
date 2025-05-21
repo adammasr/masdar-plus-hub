@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Facebook, RefreshCw } from "lucide-react";
@@ -12,7 +11,31 @@ import { toast } from "sonner";
 // تاريخ بداية سحب الأخبار (21 مايو 2025)
 const startSyncDate = new Date('2025-05-21T00:00:00');
 
+// حماية مكون فيسبوك: الظهور فقط للمستخدم adammasr
+const isAdmin = () => {
+  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+};
+
 const FacebookSection = () => {
+  // منع غير الأدمن من الدخول (حماية واجهة فقط)
+  if (!isAdmin()) {
+    return (
+      <Card className="border-2 border-gray-100 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
+          <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+            <Facebook className="h-5 w-5 text-blue-600" />
+            صفحات فيسبوك
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-16 text-red-600 font-bold">
+            ليس لديك صلاحية الوصول إلى لوحة التحكم.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const [facebookPages, setFacebookPages] = useState<FacebookPage[]>([
     { id: "1", name: "المتحدث الرسمي للرئاسة", url: "https://www.facebook.com/example1", autoUpdate: true, lastUpdated: new Date().toISOString() },
     { id: "2", name: "القاهرة الإخبارية", url: "https://www.facebook.com/example2", autoUpdate: true, lastUpdated: new Date().toISOString() },
@@ -47,29 +70,29 @@ const FacebookSection = () => {
   // Function to sync all Facebook pages
   const handleSyncAllPages = async () => {
     setIsLoading(true);
-    
+
     try {
       const enabledPages = facebookPages.filter(page => page.autoUpdate);
       let totalSyncedArticles = 0;
-      
+
       for (const page of enabledPages) {
         // For each page, get articles and filter by date
         const articles = await simulateFacebookArticles(page.name);
-        const filteredArticles = articles.filter(article => 
+        const filteredArticles = articles.filter(article =>
           new Date(article.date) >= startSyncDate
         );
-        
+
         if (filteredArticles.length > 0) {
           addBatchArticles(filteredArticles);
           totalSyncedArticles += filteredArticles.length;
-          
+
           // Update last synced time
-          setFacebookPages(prev => prev.map(p => 
+          setFacebookPages(prev => prev.map(p =>
             p.id === page.id ? { ...p, lastUpdated: new Date().toISOString() } : p
           ));
         }
       }
-      
+
       if (totalSyncedArticles > 0) {
         toast.success(`تم مزامنة ${totalSyncedArticles} منشور من ${enabledPages.length} صفحة`);
       } else {
@@ -107,7 +130,7 @@ const FacebookSection = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <FacebookPageList 
+        <FacebookPageList
           facebookPages={facebookPages}
           setFacebookPages={setFacebookPages}
           autoSync={autoSync}
