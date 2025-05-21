@@ -97,3 +97,26 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+import { useEffect, useState } from "react";
+
+const Dashboard = () => {
+  const [articlesCount, setArticlesCount] = useState(0);
+
+  useEffect(() => {
+    // عدّل هذا حسب طريقة جلب الأخبار عندك (مثلاً من localStorage أو API)
+    const articles = JSON.parse(localStorage.getItem("articles") || "[]");
+    setArticlesCount(articles.length);
+  }, []);
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">لوحة التحكم</h2>
+      <div className="bg-white rounded shadow p-4 mb-4">
+        <span className="font-semibold">عدد الأخبار:</span> {articlesCount}
+      </div>
+      {/* يمكنك إضافة المزيد من الإحصائيات هنا */}
+    </div>
+  );
+};
+
+export default Dashboard;
