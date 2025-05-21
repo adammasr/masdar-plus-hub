@@ -1,11 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Facebook, RefreshCw, ExternalLink, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { FacebookPage } from "../../../types/facebook";
@@ -22,6 +20,13 @@ interface FacebookPageListProps {
   startSyncDate: Date;
 }
 
+// حماية مكون قائمة صفحات فيسبوك: الظهور فقط للمستخدم adammasr
+const isAdmin = () => {
+  // لاحظ: يمكنك تخصيص هذه الدالة أو جلب اسم المستخدم من نظام المصادقة الحقيقي لديك
+  // حالياً، سنستخدم متغير window فقط للمثال، ويفترض أن يتم جلب اسم المستخدم من السياق أو مصادقة حقيقية
+  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+};
+
 const FacebookPageList = ({
   facebookPages,
   setFacebookPages,
@@ -31,6 +36,15 @@ const FacebookPageList = ({
   setIsLoading,
   startSyncDate
 }: FacebookPageListProps) => {
+  // منع غير الأدمن من الدخول (حماية واجهة فقط)
+  if (!isAdmin()) {
+    return (
+      <div className="text-center py-16 text-red-600 font-bold">
+        ليس لديك صلاحية الوصول إلى لوحة التحكم.
+      </div>
+    );
+  }
+
   const [newPageName, setNewPageName] = useState("");
   const [newPageUrl, setNewPageUrl] = useState("");
   const { addBatchArticles } = useArticles();
@@ -39,27 +53,27 @@ const FacebookPageList = ({
   // Function to simulate fetching from Facebook page
   const handleFacebookPageSync = async (pageId: string) => {
     setIsLoading(true);
-    
+
     try {
       const page = facebookPages.find(p => p.id === pageId);
       if (!page) throw new Error("الصفحة غير موجودة");
-      
+
       // Simulate fetching posts with respect to the startSyncDate
       const articles = await simulateFacebookArticles(page.name);
-      
+
       // Filter articles to only include those from startSyncDate or newer
-      const filteredArticles = articles.filter(article => 
+      const filteredArticles = articles.filter(article =>
         new Date(article.date) >= startSyncDate
       );
-      
+
       if (filteredArticles.length > 0) {
         addBatchArticles(filteredArticles);
-        
+
         // Update last synced time
-        setFacebookPages(prev => prev.map(p => 
+        setFacebookPages(prev => prev.map(p =>
           p.id === pageId ? { ...p, lastUpdated: new Date().toISOString() } : p
         ));
-        
+
         toast.success(`تم مزامنة ${filteredArticles.length} منشورات من ${page.name} (بداية من ${startSyncDate.toLocaleDateString('ar-EG')})`);
       } else {
         toast.info(`لم يتم العثور على منشورات جديدة من ${page.name} منذ ${startSyncDate.toLocaleDateString('ar-EG')}`);
@@ -71,14 +85,14 @@ const FacebookPageList = ({
       setIsLoading(false);
     }
   };
-  
+
   // Function to add new Facebook page
   const handleAddFacebookPage = () => {
     if (!newPageName || !newPageUrl) {
       toast.error("الرجاء إدخال اسم ورابط الصفحة");
       return;
     }
-    
+
     const newPage = {
       id: Date.now().toString(),
       name: newPageName,
@@ -86,7 +100,7 @@ const FacebookPageList = ({
       autoUpdate: true,
       lastUpdated: new Date().toISOString()
     };
-    
+
     setFacebookPages([...facebookPages, newPage]);
     setNewPageName("");
     setNewPageUrl("");
@@ -101,7 +115,7 @@ const FacebookPageList = ({
 
   // Function to toggle auto-sync for Facebook page
   const togglePageAutoSync = (pageId: string) => {
-    setFacebookPages(prev => prev.map(page => 
+    setFacebookPages(prev => prev.map(page =>
       page.id === pageId ? { ...page, autoUpdate: !page.autoUpdate } : page
     ));
   };
@@ -109,9 +123,9 @@ const FacebookPageList = ({
   // Function to format date string
   const formatLastUpdated = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleString('ar-EG', { 
-      year: 'numeric', 
-      month: 'short', 
+    return date.toLocaleString('ar-EG', {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -137,14 +151,14 @@ const FacebookPageList = ({
             className="border-gray-300 focus:border-news-accent focus:ring-news-accent"
           />
         </div>
-        <Button 
-          onClick={handleAddFacebookPage} 
+        <Button
+          onClick={handleAddFacebookPage}
           className="bg-blue-600 hover:bg-blue-700 mt-3"
         >
           إضافة صفحة
         </Button>
       </div>
-      
+
       {/* Auto-Sync Toggle */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -165,12 +179,12 @@ const FacebookPageList = ({
           </Label>
         </div>
       </div>
-      
+
       {/* Facebook Pages List */}
       <div className="space-y-3 max-h-[600px] overflow-y-auto">
         {facebookPages.map((page) => (
-          <div 
-            key={page.id} 
+          <div
+            key={page.id}
             className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
           >
             <div>
@@ -182,9 +196,9 @@ const FacebookPageList = ({
                   </Badge>
                 )}
               </div>
-              <a 
-                href={page.url} 
-                target="_blank" 
+              <a
+                href={page.url}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-1"
               >
@@ -192,7 +206,7 @@ const FacebookPageList = ({
                 {page.url}
               </a>
               <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                <Clock className="h-3 w-3" /> 
+                <Clock className="h-3 w-3" />
                 آخر تحديث: {formatLastUpdated(page.lastUpdated)}
               </p>
             </div>
@@ -208,9 +222,9 @@ const FacebookPageList = ({
                   مزامنة تلقائية
                 </Label>
               </div>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => handleFacebookPageSync(page.id)}
                 disabled={isLoading}
                 className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
@@ -218,9 +232,9 @@ const FacebookPageList = ({
                 <RefreshCw className={`h-4 w-4 ml-1 ${isLoading ? 'animate-spin' : ''}`} />
                 مزامنة
               </Button>
-              <Button 
-                size="sm" 
-                variant="destructive" 
+              <Button
+                size="sm"
+                variant="destructive"
                 onClick={() => handleRemoveFacebookPage(page.id)}
                 className="bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 border-none"
               >
