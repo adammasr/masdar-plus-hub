@@ -1,5 +1,6 @@
 
-import { createContext, useState, useContext, ReactNode } from "react";
+import { createContext, useState, useContext, ReactNode, useEffect } from "react";
+import { reformatArticleWithAI, extractImageFromContent, updateArticleDate } from "../utils/newsFormatter";
 
 export interface Article {
   id: string;
@@ -21,12 +22,22 @@ interface ArticleContextType {
   deleteArticle: (id: string) => void;
   featuredArticles: Article[];
   addBatchArticles: (articles: Article[]) => void;
+  reformatArticle: (id: string) => Promise<void>;
 }
 
 const ArticleContext = createContext<ArticleContextType | undefined>(undefined);
 
-// Sample initial data
-const initialArticles: Article[] = [
+// Add current date to articles
+const addCurrentDateToArticles = (articles: Article[]): Article[] => {
+  const today = new Date().toISOString().split('T')[0];
+  return articles.map(article => ({
+    ...article,
+    date: today
+  }));
+};
+
+// Sample initial data with today's date
+const initialArticles: Article[] = addCurrentDateToArticles([
   {
     id: "1",
     title: "الرئيس المصري يفتتح عددًا من المشروعات القومية الجديدة",
@@ -104,10 +115,17 @@ const initialArticles: Article[] = [
     date: "2023-05-13",
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   }
-];
+]);
 
 export const ArticleProvider = ({ children }: { children: ReactNode }) => {
   const [articles, setArticles] = useState<Article[]>(initialArticles);
+
+  // Auto update all articles dates to today on first load
+  useEffect(() => {
+    setArticles(prev => 
+      prev.map(article => updateArticleDate(article))
+    );
+  }, []);
 
   const addArticle = (article: Article) => {
     setArticles((prevArticles) => [...prevArticles, article]);
@@ -130,6 +148,29 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
   const addBatchArticles = (newArticles: Article[]) => {
     setArticles((prevArticles) => [...prevArticles, ...newArticles]);
   };
+  
+  const reformatArticle = async (id: string) => {
+    const article = articles.find(a => a.id === id);
+    if (!article) return;
+    
+    // Process article with AI
+    const { reformattedTitle, reformattedContent } = await reformatArticleWithAI(
+      article.content,
+      article.title
+    );
+    
+    // Extract image if not present
+    const imageUrl = article.image || extractImageFromContent(article.content, "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس");
+    
+    // Update article with reformatted content
+    updateArticle(id, {
+      title: reformattedTitle,
+      content: reformattedContent,
+      excerpt: reformattedContent.substring(0, 150) + "...",
+      image: imageUrl,
+      date: new Date().toISOString().split("T")[0] // Update to today
+    });
+  };
 
   const featuredArticles = articles.filter((article) => article.featured);
 
@@ -141,7 +182,8 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
         updateArticle,
         deleteArticle,
         featuredArticles,
-        addBatchArticles
+        addBatchArticles,
+        reformatArticle
       }}
     >
       {children}
