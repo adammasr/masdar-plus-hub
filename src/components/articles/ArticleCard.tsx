@@ -2,19 +2,17 @@ import { Link } from "react-router-dom";
 import { Article } from "../../context/ArticleContext";
 import { Play, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
 
 interface ArticleCardProps {
   article: Article;
   featured?: boolean;
-  detailUrl: string; // === جديد: رابط التفاصيل
+  detailUrl: string; // رابط تفاصيل الخبر
 }
 
 const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps) => {
   const { title, excerpt, image, category, date, videoUrl, source } = article;
-  const [imageError, setImageError] = useState(false);
 
-  // تاريخ العرض
+  // تنسيق التاريخ للعرض
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-EG', { 
@@ -24,17 +22,13 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
     });
   };
 
-  // fallback صورة افتراضية
-  const fallbackImage = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60";
-
   return (
     <div className={`news-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ${featured ? 'md:flex' : ''}`}>
       <div className={`relative ${featured ? 'md:w-2/5' : ''}`}>
         <img
-          src={imageError ? fallbackImage : image}
+          src={image}
           alt={title}
           className={`w-full h-48 object-cover ${featured ? 'md:h-full' : ''}`}
-          onError={() => setImageError(true)}
           loading="lazy"
         />
         <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
