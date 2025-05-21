@@ -5,7 +5,7 @@ import ArticleGrid from "../components/articles/ArticleGrid";
 import { Article } from "../context/ArticleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Newspaper, TrendingUp, PieChart, Video } from "lucide-react";
+import { Newspaper, TrendingUp, PieChart, Video, Play } from "lucide-react";
 
 const Home = () => {
   const { articles } = useArticles();
