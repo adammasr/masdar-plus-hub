@@ -6,8 +6,7 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview"
-  }
-}
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
