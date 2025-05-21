@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
@@ -8,11 +7,13 @@ const Header = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
 
+  // تم إضافة المحافظات هنا
   const navigation = [
     { name: "الرئيسية", path: "/" },
     { name: "الأخبار", path: "/news" },
     { name: "السياسة", path: "/politics" },
     { name: "الاقتصاد", path: "/economy" },
+    { name: "المحافظات", path: "/governorates" }, // السطر الجديد
     { name: "فيديوهات", path: "/videos" },
     { name: "اتصل بنا", path: "/contact" },
   ];
