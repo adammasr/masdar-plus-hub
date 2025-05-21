@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import Politics from "./pages/Politics";
 import Economy from "./pages/Economy";
 import Videos from "./pages/Videos";
 import Contact from "./pages/Contact";
+import Governorates from "./pages/Governorates"; // تم إضافة الاستيراد هنا
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminArticles from "./pages/admin/Articles";
 import AdminNewArticle from "./pages/admin/NewArticle";
@@ -36,6 +36,7 @@ const App = () => (
               <Route path="economy" element={<Economy />} />
               <Route path="videos" element={<Videos />} />
               <Route path="contact" element={<Contact />} />
+              <Route path="governorates" element={<Governorates />} /> {/* إضافة الراوت الخاص بالمحافظات */}
             </Route>
             <Route path="/admin" element={<Layout admin />}>
               <Route index element={<AdminDashboard />} />
