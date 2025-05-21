@@ -7,6 +7,7 @@ import { FacebookPage } from "../../../types/facebook";
 import FacebookPageList from "./FacebookPageList";
 import { useArticles } from "../../../context/ArticleContext";
 import { useSimulateFacebookArticles } from "../../../hooks/useSimulateSources";
+import { toast } from "sonner";
 
 // تاريخ بداية سحب الأخبار (21 مايو 2025)
 const startSyncDate = new Date('2025-05-21T00:00:00');
