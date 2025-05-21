@@ -5,50 +5,66 @@ import { Article } from "../context/ArticleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Newspaper, TrendingUp, PieChart, Video, Play, Calendar } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 const Home = () => {
   const { articles } = useArticles();
 
   useEffect(() => {
-    const key = "siteVisits";
-    const visits = Number(localStorage.getItem(key) || "0") + 1;
-    localStorage.setItem(key, String(visits));
+    if (typeof window !== "undefined") {
+      const key = "siteVisits";
+      const visits = Number(localStorage.getItem(key) || "0") + 1;
+      localStorage.setItem(key, String(visits));
+    }
   }, []);
 
   const startSyncDate = new Date('2025-05-21T00:00:00');
-  const latestNews = articles
-    .filter(article => article.category === "أخبار" && new Date(article.date) >= startSyncDate)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 6);
 
-  const politicsNews = articles
-    .filter(article => article.category === "سياسة" && new Date(article.date) >= startSyncDate)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4);
+  const latestNews = useMemo(() =>
+    articles
+      .filter(article => article.category === "أخبار" && new Date(article.date) >= startSyncDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6),
+    [articles]
+  );
 
-  const economyNews = articles
-    .filter(article => article.category === "اقتصاد" && new Date(article.date) >= startSyncDate)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 4);
+  const politicsNews = useMemo(() =>
+    articles
+      .filter(article => article.category === "سياسة" && new Date(article.date) >= startSyncDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 4),
+    [articles]
+  );
 
-  const videoArticles = articles
-    .filter(article => article.videoUrl && new Date(article.date) >= startSyncDate)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 2);
+  const economyNews = useMemo(() =>
+    articles
+      .filter(article => article.category === "اقتصاد" && new Date(article.date) >= startSyncDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 4),
+    [articles]
+  );
+
+  const videoArticles = useMemo(() =>
+    articles
+      .filter(article => article.videoUrl && new Date(article.date) >= startSyncDate)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 2),
+    [articles]
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "تاريخ غير صالح";
     return date.toLocaleDateString('ar-EG', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
   const CategoryNewsItem = ({ article }: { article: Article }) => (
     <div className="border-b pb-3 mb-3 last:border-0 last:mb-0 last:pb-0">
-      <Link to="#" className="block group">
+      <Link to={`/article/${article.id}`} className="block group">
         <h3 className="text-lg font-bold mb-1 group-hover:text-news-accent transition-colors">
           {article.title}
         </h3>
@@ -147,10 +163,10 @@ const Home = () => {
               <div className="space-y-6">
                 {videoArticles.length > 0 ? (
                   videoArticles.map((article) => (
-                    <div key={article.id} className="relative group">
+                    <Link to={`/article/${article.id}`} key={article.id} className="block group">
                       <div className="relative">
                         <img
-                          src={article.image}
+                          src={article.image || "/placeholder.jpg"}
                           alt={article.title}
                           className="w-full h-40 object-cover rounded-md"
                         />
@@ -162,7 +178,7 @@ const Home = () => {
                       </div>
                       <h3 className="mt-2 font-bold group-hover:text-news-accent transition-colors">{article.title}</h3>
                       <p className="text-xs text-gray-500 mt-1">{formatDate(article.date)}</p>
-                    </div>
+                    </Link>
                   ))
                 ) : (
                   <p className="text-gray-500 text-center py-4">لا توجد فيديوهات حالياً</p>
