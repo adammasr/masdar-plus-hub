@@ -74,6 +74,14 @@ const App = () => (
                 }
               />
               <Route
+  path="users"
+  element={
+    <ProtectedRoute>
+      <AdminUsers />
+    </ProtectedRoute>
+  }
+/>
+              <Route
                 path="categories"
                 element={
                   <ProtectedRoute>
