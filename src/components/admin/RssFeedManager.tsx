@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
+// حماية الواجهة: السماح فقط للأدمن adammasr
+const isAdmin = () => {
+  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+};
+
 interface RssFeed {
   id: string;
   url: string;
@@ -20,6 +24,24 @@ interface RssFeed {
 }
 
 const RssFeedManager = () => {
+  if (!isAdmin()) {
+    return (
+      <Card className="border-2 border-gray-100 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
+          <CardTitle className="text-2xl text-gray-800 flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-news-accent" />
+            إدارة خلاصات RSS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-16 text-red-600 font-bold">
+            ليس لديك صلاحية الوصول إلى لوحة التحكم.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const [feedUrl, setFeedUrl] = useState("");
   const [feedName, setFeedName] = useState("");
   const [feeds, setFeeds] = useState<RssFeed[]>([
