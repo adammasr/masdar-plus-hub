@@ -1,33 +1,35 @@
-
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
 import ArticleGrid from "../components/articles/ArticleGrid";
 import { Article } from "../context/ArticleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Newspaper, TrendingUp, PieChart, Video, Play } from "lucide-react";
+import { Newspaper, TrendingUp, PieChart, Video, Play, Calendar } from "lucide-react";
 
 const Home = () => {
   const { articles } = useArticles();
   
-  // Filter articles by category
+  // تاريخ بداية سحب الأخبار (21 مايو 2025)
+  const startSyncDate = new Date('2025-05-21T00:00:00');
+  
+  // Filter articles by category and date
   const latestNews = articles
-    .filter(article => article.category === "أخبار")
+    .filter(article => article.category === "أخبار" && new Date(article.date) >= startSyncDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
     
   const politicsNews = articles
-    .filter(article => article.category === "سياسة")
+    .filter(article => article.category === "سياسة" && new Date(article.date) >= startSyncDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 4);
     
   const economyNews = articles
-    .filter(article => article.category === "اقتصاد")
+    .filter(article => article.category === "اقتصاد" && new Date(article.date) >= startSyncDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 4);
     
   const videoArticles = articles
-    .filter(article => article.videoUrl)
+    .filter(article => article.videoUrl && new Date(article.date) >= startSyncDate)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 2);
   
@@ -73,6 +75,12 @@ const Home = () => {
   
   return (
     <div className="container mx-auto py-6">
+      {/* تاريخ البداية */}
+      <div className="flex items-center mb-4 bg-blue-50 text-blue-800 px-4 py-2 rounded-md">
+        <Calendar className="ml-2 text-blue-600" size={18} />
+        <span>تظهر الأخبار بدءًا من تاريخ {startSyncDate.toLocaleDateString('ar-EG')}</span>
+      </div>
+      
       {/* Featured Articles */}
       <FeaturedArticles />
       

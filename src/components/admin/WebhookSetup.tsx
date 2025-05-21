@@ -17,13 +17,37 @@ const WebhookSetup = () => {
   const [facebookPages, setFacebookPages] = useState([
     { id: "1", name: "المتحدث الرسمي للرئاسة", url: "https://www.facebook.com/example1", autoUpdate: true, lastUpdated: new Date().toISOString() },
     { id: "2", name: "القاهرة الإخبارية", url: "https://www.facebook.com/example2", autoUpdate: true, lastUpdated: new Date().toISOString() },
-    { id: "3", name: "مجلس الوزراء المصري", url: "https://www.facebook.com/example3", autoUpdate: true, lastUpdated: new Date().toISOString() }
+    { id: "3", name: "مجلس الوزراء المصري", url: "https://www.facebook.com/example3", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "4", name: "وزارة الداخلية", url: "https://www.facebook.com/MoiEgy", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "5", name: "المتحدث العسكري للقوات المسلحة", url: "https://www.facebook.com/EgyArmySpox", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "6", name: "وزارة المالية", url: "https://www.facebook.com/MOF.Egypt", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "7", name: "وزارة النقل", url: "https://www.facebook.com/MinistryTransportation", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "8", name: "وزارة الإسكان", url: "https://www.facebook.com/profile.php?id=100064535599158", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "9", name: "وزارة التضامن الاجتماعي", url: "https://www.facebook.com/MoSS.Egypt", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "10", name: "وزارة التربية والتعليم", url: "https://www.facebook.com/egypt.moe", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "11", name: "وزارة الصحة", url: "https://www.facebook.com/egypt.mohp", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "12", name: "وزارة التخطيط", url: "https://www.facebook.com/EgyptMOP", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "13", name: "إكسترا نيوز", url: "https://www.facebook.com/extranewstv", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "14", name: "محافظة القاهرة", url: "https://www.facebook.com/Cairo.Governorate", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "15", name: "محافظة الإسكندرية", url: "https://www.facebook.com/alexandria.gov.eg", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "16", name: "الإسكندرية", url: "https://www.facebook.com/Alex.Gov.Eg", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "17", name: "محافظة القليوبية", url: "https://www.facebook.com/qalyubiya.gov.org", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "18", name: "محافظة المنوفية", url: "https://www.facebook.com/monofeya.gov.eg", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "19", name: "محافظة الوادي الجديد", url: "https://www.facebook.com/wadycom", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "20", name: "محافظة دمياط", url: "https://www.facebook.com/Domyat.governorate", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "21", name: "محافظة المنيا", url: "https://www.facebook.com/minia.gov.eg", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "22", name: "مركز المعلومات ودعم اتخاذ القرار", url: "https://www.facebook.com/idsc.gov.eg", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "23", name: "وزارة الاتصالات", url: "https://www.facebook.com/profile.php?id=100069296826007", autoUpdate: true, lastUpdated: new Date().toISOString() },
+    { id: "24", name: "وكالة الشرق الأوسط", url: "https://www.facebook.com/MENAArabic", autoUpdate: true, lastUpdated: new Date().toISOString() }
   ]);
   const { addBatchArticles } = useArticles();
   const [isLoading, setIsLoading] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
   const [newPageName, setNewPageName] = useState("");
   const [newPageUrl, setNewPageUrl] = useState("");
+  
+  // تاريخ بداية سحب الأخبار (21 مايو 2025)
+  const startSyncDate = new Date('2025-05-21T00:00:00');
 
   // Function to simulate fetching from webhook
   const handleWebhookTest = async () => {
@@ -147,16 +171,26 @@ const WebhookSetup = () => {
       const page = facebookPages.find(p => p.id === pageId);
       if (!page) throw new Error("الصفحة غير موجودة");
       
-      // Simulate fetching posts
+      // Simulate fetching posts with respect to the startSyncDate
       const articles = await simulateFacebookArticles(page.name);
-      addBatchArticles(articles);
       
-      // Update last synced time
-      setFacebookPages(prev => prev.map(p => 
-        p.id === pageId ? { ...p, lastUpdated: new Date().toISOString() } : p
-      ));
+      // Filter articles to only include those from startSyncDate or newer
+      const filteredArticles = articles.filter(article => 
+        new Date(article.date) >= startSyncDate
+      );
       
-      toast.success(`تم مزامنة ${articles.length} منشورات من ${page.name}`);
+      if (filteredArticles.length > 0) {
+        addBatchArticles(filteredArticles);
+        
+        // Update last synced time
+        setFacebookPages(prev => prev.map(p => 
+          p.id === pageId ? { ...p, lastUpdated: new Date().toISOString() } : p
+        ));
+        
+        toast.success(`تم مزامنة ${filteredArticles.length} منشورات من ${page.name} (بداية من ${startSyncDate.toLocaleDateString('ar-EG')})`);
+      } else {
+        toast.info(`لم يتم العثور على منشورات جديدة من ${page.name} منذ ${startSyncDate.toLocaleDateString('ar-EG')}`);
+      }
     } catch (error) {
       console.error("Error syncing Facebook page:", error);
       toast.error("حدث خطأ أثناء مزامنة الصفحة");
@@ -176,9 +210,18 @@ const WebhookSetup = () => {
     // Generate 1-3 mock articles
     const articleCount = 1 + Math.floor(Math.random() * 3);
     
+    // Generate current date for articles (to simulate new content)
+    const currentDate = new Date();
+    
     for (let i = 0; i < articleCount; i++) {
-      const originalTitle = `منشور من صفحة ${pageName} - ${i+1}`;
-      const originalContent = `هذا محتوى تجريبي لمنشور تم استيراده من صفحة ${pageName} على فيسبوك. في الإصدار الحقيقي، سيتم استبدال هذا بمحتوى حقيقي من الصفحة.`;
+      // Create a date that's between startSyncDate and current date
+      const articleDate = new Date();
+      // Randomly set the date to be between startSyncDate and now
+      const timeDiff = currentDate.getTime() - startSyncDate.getTime();
+      articleDate.setTime(startSyncDate.getTime() + Math.random() * timeDiff);
+      
+      const originalTitle = `منشور جديد من صفحة ${pageName} - ${i+1}`;
+      const originalContent = `هذا محتوى تجريبي لمنشور جديد تم نشره بتاريخ ${articleDate.toLocaleDateString('ar-EG')} من صفحة ${pageName} على فيسبوك. في الإصدار الحقيقي، سيتم استبدال هذا بمحتوى حقيقي من الصفحة.`;
       
       // Process with AI
       const { reformattedTitle, reformattedContent } = await reformatArticleWithAI(originalContent, originalTitle);
@@ -193,7 +236,7 @@ const WebhookSetup = () => {
         excerpt: reformattedContent.substring(0, 120) + "...",
         image: imageUrl,
         category: categories[Math.floor(Math.random() * categories.length)],
-        date: new Date().toISOString().split("T")[0],
+        date: articleDate.toISOString(),
         source: pageName
       });
     }
@@ -247,18 +290,69 @@ const WebhookSetup = () => {
     });
   };
 
+  // Function to sync all Facebook pages
+  const handleSyncAllPages = async () => {
+    setIsLoading(true);
+    
+    try {
+      const enabledPages = facebookPages.filter(page => page.autoUpdate);
+      let totalSyncedArticles = 0;
+      
+      for (const page of enabledPages) {
+        // For each page, get articles and filter by date
+        const articles = await simulateFacebookArticles(page.name);
+        const filteredArticles = articles.filter(article => 
+          new Date(article.date) >= startSyncDate
+        );
+        
+        if (filteredArticles.length > 0) {
+          addBatchArticles(filteredArticles);
+          totalSyncedArticles += filteredArticles.length;
+          
+          // Update last synced time
+          setFacebookPages(prev => prev.map(p => 
+            p.id === page.id ? { ...p, lastUpdated: new Date().toISOString() } : p
+          ));
+        }
+      }
+      
+      if (totalSyncedArticles > 0) {
+        toast.success(`تم مزامنة ${totalSyncedArticles} منشور من ${enabledPages.length} صفحة`);
+      } else {
+        toast.info(`لم يتم العثور على منشورات جديدة منذ ${startSyncDate.toLocaleDateString('ar-EG')}`);
+      }
+    } catch (error) {
+      console.error("Error syncing all Facebook pages:", error);
+      toast.error("حدث خطأ أثناء مزامنة الصفحات");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Facebook Pages Section */}
       <Card className="border-2 border-gray-100 shadow-lg">
         <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
-          <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
-            <Facebook className="h-5 w-5 text-blue-600" />
-            صفحات فيسبوك
-          </CardTitle>
-          <CardDescription>
-            مزامنة المنشورات من صفحات فيسبوك الرسمية
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-xl text-gray-800 flex items-center gap-2">
+                <Facebook className="h-5 w-5 text-blue-600" />
+                صفحات فيسبوك
+              </CardTitle>
+              <CardDescription>
+                مزامنة المنشورات من صفحات فيسبوك الرسمية (بداية من {startSyncDate.toLocaleDateString('ar-EG')})
+              </CardDescription>
+            </div>
+            <Button
+              onClick={handleSyncAllPages}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <RefreshCw className={`h-4 w-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
+              مزامنة جميع الصفحات
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -309,7 +403,7 @@ const WebhookSetup = () => {
             </div>
             
             {/* Facebook Pages List */}
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
               {facebookPages.map((page) => (
                 <div 
                   key={page.id} 
@@ -357,7 +451,7 @@ const WebhookSetup = () => {
                       disabled={isLoading}
                       className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
                     >
-                      <RefreshCw className="h-4 w-4 mr-1" />
+                      <RefreshCw className={`h-4 w-4 ml-1 ${isLoading ? 'animate-spin' : ''}`} />
                       مزامنة
                     </Button>
                     <Button 
@@ -447,3 +541,4 @@ const WebhookSetup = () => {
 };
 
 export default WebhookSetup;
+

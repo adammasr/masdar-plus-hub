@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import RssFeedManager from "../../components/admin/RssFeedManager";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, CheckCircle2, Settings } from "lucide-react";
+import { Info, CheckCircle2, Settings, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useArticles } from "../../context/ArticleContext";
@@ -14,6 +14,9 @@ const AdminRssFeeds = () => {
   const [autoImportEnabled, setAutoImportEnabled] = useState(true);
   const [lastImportTime, setLastImportTime] = useState<string | null>(null);
   
+  // تاريخ بداية سحب الأخبار (21 مايو 2025)
+  const startSyncDate = new Date('2025-05-21T00:00:00');
+  
   // Simulate auto import on component mount
   useEffect(() => {
     if (autoImportEnabled) {
@@ -22,7 +25,7 @@ const AdminRssFeeds = () => {
       
       toast({
         title: "تحديث تلقائي",
-        description: "تم تحديث الأخبار تلقائيًا من جميع المصادر",
+        description: `تم تحديث الأخبار تلقائيًا من جميع المصادر (بدءًا من ${startSyncDate.toLocaleDateString('ar-EG')})`,
         duration: 5000,
       });
     }
@@ -35,7 +38,7 @@ const AdminRssFeeds = () => {
         
         toast({
           title: "تحديث تلقائي",
-          description: "تم تحديث الأخبار تلقائيًا من جميع المصادر",
+          description: `تم تحديث الأخبار تلقائيًا من جميع المصادر (بدءًا من ${startSyncDate.toLocaleDateString('ar-EG')})`,
           duration: 5000,
         });
       }
@@ -82,6 +85,15 @@ const AdminRssFeeds = () => {
         </div>
       </div>
       
+      {/* Date Filter Alert */}
+      <Alert className="bg-blue-50 border-blue-200">
+        <Calendar className="h-5 w-5 text-blue-600" />
+        <AlertTitle className="text-blue-800">تاريخ بداية سحب الأخبار</AlertTitle>
+        <AlertDescription className="text-blue-700">
+          يتم سحب الأخبار الجديدة فقط بدءًا من تاريخ {startSyncDate.toLocaleDateString('ar-EG')}
+        </AlertDescription>
+      </Alert>
+      
       {lastImportTime && (
         <Alert className="bg-blue-50 border-blue-200">
           <Info className="h-5 w-5 text-blue-600" />
@@ -100,27 +112,29 @@ const AdminRssFeeds = () => {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
-              <div className="text-3xl font-bold text-gray-800">{articles.length}</div>
+              <div className="text-3xl font-bold text-gray-800">
+                {articles.filter(article => new Date(article.date) >= startSyncDate).length}
+              </div>
               <div className="text-gray-500">إجمالي المقالات</div>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
               <div className="text-3xl font-bold text-gray-800">
-                {new Set(articles.map(a => a.source).filter(Boolean)).size}
+                {new Set(articles.filter(a => new Date(a.date) >= startSyncDate).map(a => a.source).filter(Boolean)).size}
               </div>
               <div className="text-gray-500">المصادر</div>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
               <div className="text-3xl font-bold text-gray-800">
-                {articles.filter(a => a.category === "أخبار").length}
+                {articles.filter(a => a.category === "أخبار" && new Date(a.date) >= startSyncDate).length}
               </div>
               <div className="text-gray-500">أخبار</div>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
               <div className="text-3xl font-bold text-gray-800">
-                {articles.filter(a => a.videoUrl).length}
+                {articles.filter(a => a.videoUrl && new Date(a.date) >= startSyncDate).length}
               </div>
               <div className="text-gray-500">فيديوهات</div>
             </div>
@@ -170,3 +184,4 @@ const AdminRssFeeds = () => {
 };
 
 export default AdminRssFeeds;
+
