@@ -20,21 +20,38 @@ export const reformatArticleWithAI = async (originalContent: string, originalTit
   };
 };
 
-// Extract image URL from source content
+// Extract image URL from source content - improved version
 export const extractImageFromContent = (content: string, fallbackImage: string): string => {
-  // This is a simplified version - in production you would implement proper image extraction
-  // For Facebook or RSS content, you would parse the HTML and extract image URLs
+  // In a real implementation, we would search for image URLs or img tags in the content
   
-  // Simulate finding an image in the content
+  // Check if content contains any Facebook or RSS image patterns
+  const fbImageRegex = /https:\/\/[^"\s]+\.(?:jpg|jpeg|png|gif)/gi;
+  const imgTagRegex = /<img[^>]+src="([^">]+)"/gi;
+  
+  // Look for Facebook image URLs
+  const fbMatches = content.match(fbImageRegex);
+  if (fbMatches && fbMatches.length > 0) {
+    return fbMatches[0]; // Return the first image URL found
+  }
+  
+  // Look for image tags
+  let imgMatch;
+  while ((imgMatch = imgTagRegex.exec(content)) !== null) {
+    if (imgMatch && imgMatch[1]) {
+      return imgMatch[1]; // Return the src attribute of the first img tag
+    }
+  }
+  
+  // If no image found, use a better set of placeholder images
   const dummyImages = [
-    "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس+1",
-    "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس+2",
-    "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس+3",
-    "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس+4",
+    "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1526470498-9ae73c665de8?w=800&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=800&auto=format&fit=crop&q=60",
+    "https://images.unsplash.com/photo-1584714268709-c3dd9c92b378?w=800&auto=format&fit=crop&q=60"
   ];
   
-  // In a real implementation, you would search for img tags or image URLs in the content
-  // For now, return a random image from our dummy set
+  // Return a random image from our better dummy set
   const randomImage = dummyImages[Math.floor(Math.random() * dummyImages.length)];
   return randomImage || fallbackImage;
 };
@@ -46,4 +63,17 @@ export const updateArticleDate = (article: Article): Article => {
     ...article,
     date: today
   };
+};
+
+// New function to ensure all articles have images
+export const ensureArticleHasImage = (article: Article): Article => {
+  if (!article.image || article.image.includes("placehold.co")) {
+    // Extract image from content or use a better placeholder
+    const extractedImage = extractImageFromContent(article.content, "");
+    return {
+      ...article,
+      image: extractedImage
+    };
+  }
+  return article;
 };

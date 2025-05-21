@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Article } from "../../context/ArticleContext";
 import { Play, Clock, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 interface ArticleCardProps {
   article: Article;
@@ -11,6 +12,7 @@ interface ArticleCardProps {
 
 const ArticleCard = ({ article, featured = false }: ArticleCardProps) => {
   const { title, excerpt, image, category, date, videoUrl, source } = article;
+  const [imageError, setImageError] = useState(false);
   
   // Format date for display
   const formatDate = (dateString: string) => {
@@ -21,14 +23,19 @@ const ArticleCard = ({ article, featured = false }: ArticleCardProps) => {
       day: 'numeric'
     });
   };
+
+  // Fallback image if the main image fails to load
+  const fallbackImage = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60";
   
   return (
     <div className={`news-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ${featured ? 'md:flex' : ''}`}>
       <div className={`relative ${featured ? 'md:w-2/5' : ''}`}>
         <img
-          src={image}
+          src={imageError ? fallbackImage : image}
           alt={title}
           className={`w-full h-48 object-cover ${featured ? 'md:h-full' : ''}`}
+          onError={() => setImageError(true)}
+          loading="lazy"
         />
         <div className="absolute top-2 right-2 flex flex-col gap-2 items-end">
           <Badge className="bg-news-accent hover:bg-red-700 text-white font-medium">

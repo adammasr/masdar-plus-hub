@@ -1,6 +1,5 @@
-
 import { createContext, useState, useContext, ReactNode, useEffect } from "react";
-import { reformatArticleWithAI, extractImageFromContent, updateArticleDate } from "../utils/newsFormatter";
+import { reformatArticleWithAI, extractImageFromContent, updateArticleDate, ensureArticleHasImage } from "../utils/newsFormatter";
 
 export interface Article {
   id: string;
@@ -120,15 +119,17 @@ const initialArticles: Article[] = addCurrentDateToArticles([
 export const ArticleProvider = ({ children }: { children: ReactNode }) => {
   const [articles, setArticles] = useState<Article[]>(initialArticles);
 
-  // Auto update all articles dates to today on first load
+  // Auto update all articles dates to today and ensure they have images on first load
   useEffect(() => {
     setArticles(prev => 
-      prev.map(article => updateArticleDate(article))
+      prev.map(article => ensureArticleHasImage(updateArticleDate(article)))
     );
   }, []);
 
   const addArticle = (article: Article) => {
-    setArticles((prevArticles) => [...prevArticles, article]);
+    // Ensure the article has an image before adding it
+    const articleWithImage = ensureArticleHasImage(article);
+    setArticles((prevArticles) => [...prevArticles, articleWithImage]);
   };
 
   const updateArticle = (id: string, updatedArticle: Partial<Article>) => {
@@ -146,7 +147,9 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addBatchArticles = (newArticles: Article[]) => {
-    setArticles((prevArticles) => [...prevArticles, ...newArticles]);
+    // Ensure all articles have images before adding them
+    const articlesWithImages = newArticles.map(article => ensureArticleHasImage(article));
+    setArticles((prevArticles) => [...prevArticles, ...articlesWithImages]);
   };
   
   const reformatArticle = async (id: string) => {
@@ -160,7 +163,7 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
     );
     
     // Extract image if not present
-    const imageUrl = article.image || extractImageFromContent(article.content, "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس");
+    const imageUrl = article.image || extractImageFromContent(article.content, "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60");
     
     // Update article with reformatted content
     updateArticle(id, {
