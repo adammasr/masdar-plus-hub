@@ -1,20 +1,20 @@
-
 import { Link } from "react-router-dom";
 import { Article } from "../../context/ArticleContext";
-import { Play, Clock, Tag } from "lucide-react";
+import { Play, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 interface ArticleCardProps {
   article: Article;
   featured?: boolean;
+  detailUrl: string; // === جديد: رابط التفاصيل
 }
 
-const ArticleCard = ({ article, featured = false }: ArticleCardProps) => {
+const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps) => {
   const { title, excerpt, image, category, date, videoUrl, source } = article;
   const [imageError, setImageError] = useState(false);
-  
-  // Format date for display
+
+  // تاريخ العرض
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-EG', { 
@@ -24,9 +24,9 @@ const ArticleCard = ({ article, featured = false }: ArticleCardProps) => {
     });
   };
 
-  // Fallback image if the main image fails to load
+  // fallback صورة افتراضية
   const fallbackImage = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60";
-  
+
   return (
     <div className={`news-card bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ${featured ? 'md:flex' : ''}`}>
       <div className={`relative ${featured ? 'md:w-2/5' : ''}`}>
@@ -66,7 +66,7 @@ const ArticleCard = ({ article, featured = false }: ArticleCardProps) => {
             <span>{formatDate(date)}</span>
           </div>
           <Link
-            to="#"
+            to={detailUrl}
             className="text-news-accent hover:underline font-medium flex items-center"
           >
             اقرأ المزيد
