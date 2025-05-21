@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,27 @@ import { toast } from "sonner";
 import { useArticles } from "../../../context/ArticleContext";
 import { useSimulateWebhook } from "../../../hooks/useSimulateSources";
 
+// حماية الواجهة: السماح فقط للأدمن adammasr
+const isAdmin = () => {
+  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+};
+
 const WebhookSection = () => {
+  if (!isAdmin()) {
+    return (
+      <Card className="border-2 border-gray-100 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
+          <CardTitle className="text-lg text-gray-800">استيراد المقالات من Webhook</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-16 text-red-600 font-bold">
+            ليس لديك صلاحية الوصول إلى لوحة التحكم.
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const [webhookUrl, setWebhookUrl] = useState("https://hook.eu1.make.com/example123456");
   const [isLoading, setIsLoading] = useState(false);
   const { addBatchArticles } = useArticles();
