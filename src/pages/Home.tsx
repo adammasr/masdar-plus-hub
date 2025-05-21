@@ -188,5 +188,16 @@ const Home = () => {
     </div>
   );
 };
+import { useEffect } from "react";
+
+const Home = () => {
+  useEffect(() => {
+    const key = "siteVisits";
+    const visits = Number(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, String(visits));
+  }, []);
+
+  // باقي كود الصفحة...
+};
 
 export default Home;
