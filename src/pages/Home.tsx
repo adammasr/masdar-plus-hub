@@ -5,10 +5,18 @@ import { Article } from "../context/ArticleContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Newspaper, TrendingUp, PieChart, Video, Play, Calendar } from "lucide-react";
+import { useEffect } from "react";
 
 const Home = () => {
   const { articles } = useArticles();
-  
+
+  // تتبع عدد زيارات الموقع (إحصائيات الزوار)
+  useEffect(() => {
+    const key = "siteVisits";
+    const visits = Number(localStorage.getItem(key) || "0") + 1;
+    localStorage.setItem(key, String(visits));
+  }, []);
+
   // تاريخ بداية سحب الأخبار (21 مايو 2025)
   const startSyncDate = new Date('2025-05-21T00:00:00');
   
@@ -187,17 +195,6 @@ const Home = () => {
       </div>
     </div>
   );
-};
-import { useEffect } from "react";
-
-const Home = () => {
-  useEffect(() => {
-    const key = "siteVisits";
-    const visits = Number(localStorage.getItem(key) || "0") + 1;
-    localStorage.setItem(key, String(visits));
-  }, []);
-
-  // باقي كود الصفحة...
 };
 
 export default Home;
