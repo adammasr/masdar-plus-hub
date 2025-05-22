@@ -26,21 +26,21 @@ const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
+  extends React.HTMLAttributes<HTMLSpanElement>,
     VariantProps<typeof badgeVariants> {}
 
 /**
  * Badge component: renders a styled badge, supporting variants and accessibility.
  */
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div
+const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
+  ({ className, variant, ...props }, ref) => (
+    <span
+      ref={ref}
       className={cn(badgeVariants({ variant }), className)}
       {...props}
-      tabIndex={0}
-      aria-label={props["aria-label"] || "Badge"}
     />
-  );
-}
+  )
+);
+Badge.displayName = "Badge";
 
 export { Badge, badgeVariants };
