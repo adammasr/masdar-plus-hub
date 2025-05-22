@@ -19,3 +19,5 @@ export const ads: Ad[] = [
     isActive: true,
   },
 ];
+
+export default ads;
