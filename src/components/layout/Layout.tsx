@@ -8,7 +8,7 @@ import { TrendingUp, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // --- استيراد الإعلانات الديناميكية ومكون الإعلان ---
-import { ads } from "../../data/ads";
+import ads from "../../data/ads";
 import AdBanner from "../ads/AdBanner";
 
 interface LayoutProps {
