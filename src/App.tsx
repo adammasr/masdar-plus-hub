@@ -20,6 +20,7 @@ import AdminRssFeeds from "./pages/admin/RssFeeds";
 import AdminCategories from "./pages/admin/Categories";
 import NotFound from "./pages/NotFound";
 import { ArticleProvider } from "./context/ArticleContext";
+import Login from "./pages/admin/Login"; // <-- أضف هذا السطر
 
 const queryClient = new QueryClient();
 
@@ -74,13 +75,13 @@ const App = () => (
                 }
               />
               <Route
-  path="users"
-  element={
-    <ProtectedRoute>
-      <AdminUsers />
-    </ProtectedRoute>
-  }
-/>
+                path="users"
+                element={
+                  <ProtectedRoute>
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="categories"
                 element={
@@ -90,6 +91,7 @@ const App = () => (
                 }
               />
             </Route>
+            <Route path="/admin/login" element={<Login />} /> {/* أضف هذا السطر */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
