@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Article } from "../../context/ArticleContext";
 import { Play, Clock, Flame, ExternalLink } from "lucide-react";
@@ -77,7 +78,9 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
             ${featured ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}
             line-clamp-2
           `}>
-            {title}
+            <Link to={detailUrl} className="hover:text-news-accent">
+              {title}
+            </Link>
           </h3>
           <p className="mt-3 text-gray-600 leading-relaxed text-base md:text-lg line-clamp-3">{excerpt}</p>
         </div>

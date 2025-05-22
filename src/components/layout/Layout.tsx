@@ -1,3 +1,4 @@
+
 import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -33,9 +34,17 @@ const Layout = ({ admin = false }: LayoutProps) => {
     });
   };
 
-  // --- إعلان مخصص بين المقالات الرئيسية ---
+  // فلترة الإعلانات حسب المواقع
   const betweenFeaturedAds = ads.filter(
     (ad) => ad.position === "between-featured" && ad.isActive
+  );
+
+  const sidebarTopAds = ads.filter(
+    (ad) => ad.position === "sidebar-top" && ad.isActive
+  );
+
+  const sidebarBottomAds = ads.filter(
+    (ad) => ad.position === "sidebar-bottom" && ad.isActive
   );
 
   return (
@@ -63,13 +72,9 @@ const Layout = ({ admin = false }: LayoutProps) => {
               {!admin && (
                 <div className="lg:col-span-1 space-y-6">
                   {/* --- إعلان ديناميكي أعلى الشريط الجانبي --- */}
-                  {ads
-                    .filter(
-                      (ad) => ad.position === "sidebar-top" && ad.isActive
-                    )
-                    .map((ad) => (
-                      <AdBanner ad={ad} key={ad.id} />
-                    ))}
+                  {sidebarTopAds.map((ad) => (
+                    <AdBanner ad={ad} key={ad.id} />
+                  ))}
 
                   {/* Recent News Sidebar */}
                   <Card className="shadow-sm">
@@ -86,7 +91,7 @@ const Layout = ({ admin = false }: LayoutProps) => {
                             key={article.id}
                             className="border-b pb-4 last:border-0 last:pb-0"
                           >
-                            <Link to="#" className="block group">
+                            <Link to={`/news/${article.id}`} className="block group">
                               <h3 className="font-bold text-sm group-hover:text-news-accent transition-colors">
                                 {article.title}
                               </h3>
@@ -160,21 +165,12 @@ const Layout = ({ admin = false }: LayoutProps) => {
                   </Card>
 
                   {/* --- إعلان ديناميكي أسفل الشريط الجانبي --- */}
-                  {ads
-                    .filter(
-                      (ad) => ad.position === "sidebar-bottom" && ad.isActive
-                    )
-                    .map((ad) => (
-                      <AdBanner ad={ad} key={ad.id} />
-                    ))}
+                  {sidebarBottomAds.map((ad) => (
+                    <AdBanner ad={ad} key={ad.id} />
+                  ))}
 
                   {/* Banner Ad ثابت إذا لم يوجد إعلان ديناميكي */}
-                  {ads.filter(
-                    (ad) =>
-                      (ad.position === "sidebar-top" ||
-                        ad.position === "sidebar-bottom") &&
-                      ad.isActive
-                  ).length === 0 && (
+                  {sidebarTopAds.length === 0 && sidebarBottomAds.length === 0 && (
                     <div className="bg-gray-200 rounded-lg p-4 text-center">
                       <p className="text-sm text-gray-500 mb-2">إعلان</p>
                       <div className="h-48 bg-gray-300 rounded flex items-center justify-center">

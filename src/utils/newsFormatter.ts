@@ -22,24 +22,52 @@ export const reformatArticleWithAI = async (originalContent: string, originalTit
 
 // Extract image URL from source content - improved version
 export const extractImageFromContent = (content: string, fallbackImage: string): string => {
-  // In a real implementation, we would search for image URLs or img tags in the content
-  
-  // Check if content contains any Facebook or RSS image patterns
-  const fbImageRegex = /https:\/\/[^"\s]+\.(?:jpg|jpeg|png|gif)/gi;
-  const imgTagRegex = /<img[^>]+src="([^">]+)"/gi;
-  
-  // Look for Facebook image URLs
-  const fbMatches = content.match(fbImageRegex);
-  if (fbMatches && fbMatches.length > 0) {
-    return fbMatches[0]; // Return the first image URL found
+  // First, look for Open Graph image meta tags (common in Facebook and RSS content)
+  const ogImageRegex = /<meta\s+(?:[^>]*?\s+)?property=["']og:image["']\s+(?:[^>]*?\s+)?content=["']([^"']+)["']/i;
+  const ogMatch = content.match(ogImageRegex);
+  if (ogMatch && ogMatch[1]) {
+    return ogMatch[1];
   }
   
-  // Look for image tags
-  let imgMatch;
-  while ((imgMatch = imgTagRegex.exec(content)) !== null) {
-    if (imgMatch && imgMatch[1]) {
-      return imgMatch[1]; // Return the src attribute of the first img tag
+  // Next, check for images in content with higher resolution
+  const imgSrcRegex = /<img\s+[^>]*?src=["']([^"']+)["'][^>]*?>/gi;
+  const imgMatches = [];
+  let match;
+  
+  while ((match = imgSrcRegex.exec(content)) !== null) {
+    if (match[1] && !match[1].includes('emoji') && !match[1].includes('icon') && !match[1].includes('button')) {
+      imgMatches.push(match[1]);
     }
+  }
+  
+  // Prioritize larger images (often contain words like large, full, etc.)
+  const priorityImage = imgMatches.find(img => 
+    img.includes('large') || 
+    img.includes('full') || 
+    img.includes('cover') || 
+    img.includes('og') ||
+    img.includes('1200') ||
+    img.includes('1024')
+  );
+  
+  if (priorityImage) return priorityImage;
+  if (imgMatches.length > 0) return imgMatches[0];
+  
+  // Check for Facebook or other direct image URLs
+  const fbImageRegex = /https:\/\/[^"\s]+\.(?:jpg|jpeg|png|gif)(\?[^"\s]+)?/gi;
+  const fbMatches = content.match(fbImageRegex);
+  if (fbMatches && fbMatches.length > 0) {
+    // Filter out small icons or emojis by looking for keywords
+    const filteredImages = fbMatches.filter(img => 
+      !img.includes('emoji') && 
+      !img.includes('icon') && 
+      !img.includes('small')
+    );
+    
+    if (filteredImages.length > 0) {
+      return filteredImages[0]; 
+    }
+    return fbMatches[0];
   }
   
   // If no image found, use a better set of placeholder images
@@ -65,7 +93,7 @@ export const updateArticleDate = (article: Article): Article => {
   };
 };
 
-// New function to ensure all articles have images
+// Ensure all articles have images
 export const ensureArticleHasImage = (article: Article): Article => {
   if (!article.image || article.image.includes("placehold.co")) {
     // Extract image from content or use a better placeholder
@@ -76,4 +104,55 @@ export const ensureArticleHasImage = (article: Article): Article => {
     };
   }
   return article;
+};
+
+// Process Facebook post to extract image, title, and content
+export const processFacebookPost = (post: any): Partial<Article> => {
+  // Extract the most useful parts from a Facebook post
+  const content = post.message || '';
+  
+  // Try to get title from the first line or first sentence
+  let title = '';
+  if (content) {
+    // First try to get the first line
+    const firstLine = content.split('\n')[0];
+    if (firstLine && firstLine.length > 10 && firstLine.length < 100) {
+      title = firstLine;
+    } else {
+      // If first line is not suitable, try to get first sentence
+      const firstSentence = content.split(/[.!?]/)[0];
+      if (firstSentence && firstSentence.length > 10 && firstSentence.length < 100) {
+        title = firstSentence;
+      } else {
+        // If no good title found, use truncated content
+        title = content.length > 80 ? content.substring(0, 80) + '...' : content;
+      }
+    }
+  }
+  
+  // Extract image from various Facebook post properties
+  let image = '';
+  
+  // Check full_picture first as it's often the main image
+  if (post.full_picture) {
+    image = post.full_picture;
+  } 
+  // Then check attachments
+  else if (post.attachments && post.attachments.data && post.attachments.data.length) {
+    const attachment = post.attachments.data[0];
+    if (attachment.media && attachment.media.image) {
+      image = attachment.media.image.src;
+    } else if (attachment.type === 'share' && attachment.media) {
+      image = attachment.media.image?.src || '';
+    }
+  }
+  
+  return {
+    title,
+    content: content || '',
+    excerpt: content ? (content.length > 150 ? content.substring(0, 150) + '...' : content) : '',
+    image,
+    date: post.created_time ? new Date(post.created_time).toISOString() : new Date().toISOString(),
+    source: post.from?.name || 'Facebook',
+  };
 };

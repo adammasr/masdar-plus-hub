@@ -1,8 +1,9 @@
+
 import { useArticles } from "../../context/ArticleContext";
 import ArticleCard from "./ArticleCard";
 import { Newspaper } from "lucide-react";
 
-// مسار اللوجو (تأكد من وجوده في public أو غيّر المسار حسب مكانه)
+// مسار اللوجو (تأكد من وجوده في public أو غير المسار حسب مكانه)
 const LOGO_SRC = "/logo.png";
 
 const FeaturedArticles = () => {

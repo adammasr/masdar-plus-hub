@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
@@ -15,6 +16,9 @@ import {
   Share2,
   SunMoon,
 } from "lucide-react";
+
+// مسار اللوجو (تأكد من وجوده في public أو غير المسار حسب مكانه)
+const LOGO_SRC = "/logo.png";
 
 // وقت بداية الأخبار (يفضل وضعها في إعدادات عامة أو ملف ثابت)
 const startSyncDate = new Date("2025-05-21T00:00:00");
@@ -113,7 +117,8 @@ const Home = () => {
       {/* شريط التنقل */}
       <nav className="flex items-center justify-between mb-4 py-2 px-2 md:px-6 rounded-lg bg-white/80 dark:bg-gray-900/70 shadow">
         <div className="flex items-center gap-4">
-          <Link to="/" className="text-2xl font-bold text-news-accent">
+          <Link to="/" className="text-2xl font-bold text-news-accent flex items-center">
+            <img src={LOGO_SRC} alt="مصدر بلس" className="w-8 h-8 ml-2" />
             مصدر بلس
           </Link>
           <Link
@@ -216,12 +221,14 @@ const Home = () => {
               className="bg-white dark:bg-gray-900 rounded-lg overflow-hidden shadow hover:shadow-lg flex flex-col group transition"
             >
               {article.image && (
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="h-40 w-full object-cover"
-                  loading="lazy"
-                />
+                <Link to={`/news/${article.id}`}>
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    className="h-40 w-full object-cover"
+                    loading="lazy"
+                  />
+                </Link>
               )}
               <div className="p-4 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-2">
@@ -239,24 +246,24 @@ const Home = () => {
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-lg mb-1 group-hover:text-news-accent transition">
-                  {article.title}
-                </h3>
+                <Link to={`/news/${article.id}`}>
+                  <h3 className="font-bold text-lg mb-1 group-hover:text-news-accent transition">
+                    {article.title}
+                  </h3>
+                </Link>
                 <p className="text-gray-600 text-sm mb-3 flex-1 line-clamp-2">
                   {article.excerpt}
                 </p>
                 <div className="flex items-center gap-2 mt-auto">
                   <Link
-                    to={article.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/news/${article.id}`}
                     className="text-news-accent text-xs hover:underline"
                   >
                     التفاصيل
                   </Link>
                   <button
                     onClick={() =>
-                      handleShare(article.url || window.location.href)
+                      handleShare(window.location.origin + `/news/${article.id}`)
                     }
                     title="مشاركة الخبر"
                     className="ml-auto text-gray-400 hover:text-news-accent text-xs flex items-center gap-1"
@@ -294,7 +301,7 @@ const Home = () => {
                     key={article.id}
                     className="border-b pb-3 mb-3 last:border-0 last:mb-0 last:pb-0"
                   >
-                    <Link to={article.url || "#"} className="block group">
+                    <Link to={`/news/${article.id}`} className="block group">
                       <h3 className="text-lg font-bold mb-1 group-hover:text-news-accent transition">
                         {article.title}
                       </h3>
@@ -344,7 +351,7 @@ const Home = () => {
                     key={article.id}
                     className="border-b pb-3 mb-3 last:border-0 last:mb-0 last:pb-0"
                   >
-                    <Link to={article.url || "#"} className="block group">
+                    <Link to={`/news/${article.id}`} className="block group">
                       <h3 className="text-lg font-bold mb-1 group-hover:text-news-accent transition">
                         {article.title}
                       </h3>
@@ -391,24 +398,26 @@ const Home = () => {
               {videoArticles.length > 0 ? (
                 videoArticles.map((article) => (
                   <div key={article.id} className="relative group">
-                    <div className="relative">
-                      <img
-                        src={article.image}
-                        alt={article.title}
-                        className="w-full h-40 object-cover rounded-md"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                        <div className="bg-news-accent/80 rounded-full p-3 group-hover:scale-110 transition-transform">
-                          <Play className="text-white" size={24} />
+                    <Link to={`/news/${article.id}`}>
+                      <div className="relative">
+                        <img
+                          src={article.image}
+                          alt={article.title}
+                          className="w-full h-40 object-cover rounded-md"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                          <div className="bg-news-accent/80 rounded-full p-3 group-hover:scale-110 transition-transform">
+                            <Play className="text-white" size={24} />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <h3 className="mt-2 font-bold group-hover:text-news-accent transition-colors">
-                      {article.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(article.date).toLocaleDateString("ar-EG")}
-                    </p>
+                      <h3 className="mt-2 font-bold group-hover:text-news-accent transition-colors">
+                        {article.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(article.date).toLocaleDateString("ar-EG")}
+                      </p>
+                    </Link>
                   </div>
                 ))
               ) : (

@@ -1,8 +1,13 @@
+
 import { useState, useMemo, useEffect } from "react";
 import { useArticles } from "../context/ArticleContext";
 import { Newspaper, AlertCircle, Calendar, Share2, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import ArticleCard from "../components/articles/ArticleCard";
 
+// مسار اللوجو (تأكد من وجوده في public أو غير المسار حسب مكانه)
+const LOGO_SRC = "/logo.png";
 const PAGE_SIZE = 8; // عدد الأخبار في كل صفحة
 
 const News = () => {
@@ -139,52 +144,15 @@ const News = () => {
         </div>
       </div>
 
-      {/* عرض الأخبار */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+      {/* عرض الأخبار باستخدام ArticleCard */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {pagedArticles.length > 0 ? (
           pagedArticles.map(article => (
-            <div key={article.id} className="border rounded-lg shadow-sm bg-white flex flex-col overflow-hidden group transition hover:shadow-md">
-              {article.image && (
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="h-40 w-full object-cover"
-                  loading="lazy"
-                />
-              )}
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="flex items-center mb-2 gap-2">
-                  <span className="text-xs text-gray-500">{article.source}</span>
-                  <span className="text-xs text-gray-400">{new Date(article.date).toLocaleDateString("ar-EG")}</span>
-                  {isNew(article.date) && (
-                    <Badge className="bg-green-100 text-green-700 ml-2">جديد</Badge>
-                  )}
-                </div>
-                <h2 className="text-lg font-bold mb-1 group-hover:text-news-accent transition-colors text-ellipsis overflow-hidden whitespace-nowrap">
-                  {article.title}
-                </h2>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.excerpt}</p>
-                <div className="mt-auto flex gap-2">
-                  <a
-                    href={article.url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-news-accent text-sm font-medium hover:underline"
-                  >
-                    قراءة المزيد
-                  </a>
-                  <button
-                    className="ml-auto flex items-center gap-1 text-gray-400 hover:text-news-accent text-xs"
-                    title="مشاركة الخبر"
-                    onClick={() => handleShare(article.url || window.location.href)}
-                    aria-label="مشاركة الخبر"
-                  >
-                    <Share2 size={15} />
-                    مشاركة
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ArticleCard 
+              key={article.id} 
+              article={article} 
+              detailUrl={`/news/${article.id}`}
+            />
           ))
         ) : (
           <div className="col-span-full py-12 text-center text-gray-400 text-lg">
