@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { useArticles } from "../../../context/ArticleContext";
 import { useSimulateWebhook } from "../../../hooks/useSimulateSources";
 
-// حماية الواجهة: السماح فقط للأدمن adammasr
+// الحماية: السماح فقط لمن لديه isAdmin = "true"
 const isAdmin = () => {
-  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+  return window?.localStorage?.getItem("isAdmin") === "true";
 };
 
 const WebhookSection = () => {
