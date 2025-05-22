@@ -12,13 +12,12 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // ننظف بيانات الأدمن القديمة أولاً لمنع التعارض
+
+    // امسح بيانات الأدمن القديمة
     localStorage.removeItem("isAdmin");
-    localStorage.removeItem("username");
 
     if (username === USER && password === PASS) {
       localStorage.setItem("isAdmin", "true");
-      localStorage.setItem("username", "adammasr");
       navigate("/admin");
     } else {
       setError("اسم المستخدم أو كلمة المرور غير صحيحة");
