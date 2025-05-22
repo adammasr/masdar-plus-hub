@@ -12,6 +12,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
     e.preventDefault();
     if (username === USER && password === PASS) {
       localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("username", "adammasr"); // أضف هذا السطر
       onLogin();
     } else {
       setError("اسم المستخدم أو كلمة المرور غير صحيحة");
