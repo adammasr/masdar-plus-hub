@@ -2,7 +2,7 @@ import { useArticles } from "../../context/ArticleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import WebhookSetup from "../../components/admin/WebhookSetup";
 
-const AdminDashboard = () => {
+const Dashboard = () => {
   const { articles } = useArticles();
 
   // Count articles by category
@@ -95,4 +95,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default Dashboard;
