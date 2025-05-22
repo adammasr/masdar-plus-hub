@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import RssFeedManager from "../../components/admin/RssFeedManager";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, CheckCircle2, Settings, Calendar, Clock, Alarm } from "lucide-react";
+import { Info, CheckCircle2, Settings, Calendar, Clock, AlarmClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useArticles } from "../../context/ArticleContext";
@@ -174,7 +173,7 @@ const AdminRssFeeds = () => {
                 
                 {nextSyncTime && (
                   <div className="text-sm flex items-center gap-1 text-blue-800">
-                    <Alarm className="h-4 w-4 text-blue-600" />
+                    <AlarmClock className="h-4 w-4 text-blue-600" />
                     <span>التحديث التالي: {formatNextSyncTime()}</span>
                   </div>
                 )}

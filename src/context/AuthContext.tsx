@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // نوع المستخدم (يمكنك تخصيصه حسب خصائص المستخدم في مشروعك)
@@ -5,7 +6,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  // ... يمكنك إضافة المزيد من الحقول مثل role, token, avatar ...
+  role: string; // إضافة خاصية role
+  // ... يمكنك إضافة المزيد من الحقول مثل token, avatar ...
 }
 
 interface AuthContextType {

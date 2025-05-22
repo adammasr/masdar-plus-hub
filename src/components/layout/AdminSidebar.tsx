@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 // استيراد السياق الخاص بالمصادقة أو المستخدم (عدّل المسار حسب مشروعك)
 import { useAuth } from "../../context/AuthContext"; 
@@ -10,7 +11,7 @@ const AdminSidebar = () => {
   const { user } = useAuth() || {};
 
   // تحقق من وجود المستخدم وأن دوره "admin" أو لديه صلاحية الوصول للإدارة
-  if (!user || !["admin", "superadmin"].includes(user.role)) {
+  if (!user || !["admin", "superadmin"].includes(user?.role || '')) {
     // يمكنك هنا توجيه المستخدم للصفحة الرئيسية أو صفحة تسجيل الدخول إذا لزم الأمر
     return null;
   }

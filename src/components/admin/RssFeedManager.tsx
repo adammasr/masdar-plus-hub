@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Article, useArticles } from "../../context/ArticleContext";
-import { Trash2, RefreshCw, Clock, Alarm } from "lucide-react";
+import { Trash2, RefreshCw, Clock, AlarmClock } from "lucide-react";
 import { reformatArticleWithAI, extractImageFromContent, updateArticleDate } from "../../utils/newsFormatter";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -398,7 +398,7 @@ const RssFeedManager = ({ autoSyncEnabled = true }: RssFeedManagerProps) => {
                     
                     {nextSyncTime && (
                       <div className="text-sm flex items-center gap-1 text-blue-800 whitespace-nowrap">
-                        <Alarm className="h-4 w-4 text-blue-600" />
+                        <AlarmClock className="h-4 w-4 text-blue-600" />
                         <span>التحديث التالي: {formatNextSyncTime()}</span>
                       </div>
                     )}
