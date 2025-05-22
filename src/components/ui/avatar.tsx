@@ -18,7 +18,8 @@ const Avatar = React.forwardRef<
     {...props}
   />
 ));
-Avatar.displayName = AvatarPrimitive.Root.displayName;
+// إذا كان displayName غير معرف في المكتبة، نضع اسم مخصص
+Avatar.displayName = "Avatar";
 
 /**
  * Avatar Image component.
@@ -33,7 +34,7 @@ const AvatarImage = React.forwardRef<
     {...props}
   />
 ));
-AvatarImage.displayName = AvatarPrimitive.Image.displayName;
+AvatarImage.displayName = "AvatarImage";
 
 /**
  * Avatar Fallback, used when image fails to load or is absent.
@@ -51,6 +52,6 @@ const AvatarFallback = React.forwardRef<
     {...props}
   />
 ));
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
+AvatarFallback.displayName = "AvatarFallback";
 
 export { Avatar, AvatarImage, AvatarFallback };
