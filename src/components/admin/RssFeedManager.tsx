@@ -1,14 +1,16 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Article, useArticles } from "../../context/ArticleContext";
-import { Trash2, RefreshCw, Clock } from "lucide-react";
+import { Trash2, RefreshCw, Clock, Alarm } from "lucide-react";
 import { reformatArticleWithAI, extractImageFromContent, updateArticleDate } from "../../utils/newsFormatter";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // الحماية: السماح فقط لمن لديه isAdmin = "true"
 const isAdmin = () => {
@@ -23,7 +25,11 @@ interface RssFeed {
   lastUpdated?: string;
 }
 
-const RssFeedManager = () => {
+interface RssFeedManagerProps {
+  autoSyncEnabled?: boolean;
+}
+
+const RssFeedManager = ({ autoSyncEnabled = true }: RssFeedManagerProps) => {
   if (!isAdmin()) {
     return (
       <Card className="border-2 border-gray-100 shadow-lg">
@@ -63,32 +69,94 @@ const RssFeedManager = () => {
   const { addBatchArticles } = useArticles();
   const [isLoading, setIsLoading] = useState(false);
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+  const [syncInterval, setSyncInterval] = useState("60"); // الفترة بين عمليات التحديث التلقائي بالدقائق (افتراضي: 60 دقيقة)
+  const [nextSyncTime, setNextSyncTime] = useState<Date | null>(null);
+
+  // حفظ الإعدادات في التخزين المحلي
+  useEffect(() => {
+    const savedFeeds = localStorage.getItem('rssFeeds');
+    const savedAutoUpdate = localStorage.getItem('rssAutoUpdate');
+    const savedSyncInterval = localStorage.getItem('rssFeedsSyncInterval');
+    
+    if (savedFeeds) {
+      try {
+        setFeeds(JSON.parse(savedFeeds));
+      } catch (e) {
+        console.error("خطأ في تحميل الخلاصات المحفوظة:", e);
+      }
+    }
+    
+    if (savedAutoUpdate) {
+      setAutoUpdateEnabled(savedAutoUpdate === 'true');
+    }
+    
+    if (savedSyncInterval) {
+      setSyncInterval(savedSyncInterval);
+    }
+  }, []);
+  
+  // حفظ الخلاصات والإعدادات عند تغييرها
+  useEffect(() => {
+    localStorage.setItem('rssFeeds', JSON.stringify(feeds));
+    localStorage.setItem('rssAutoUpdate', autoUpdateEnabled.toString());
+    localStorage.setItem('rssFeedsSyncInterval', syncInterval);
+  }, [feeds, autoUpdateEnabled, syncInterval]);
 
   // Auto update function
   useEffect(() => {
-    if (!autoUpdateEnabled) return;
+    if (!autoUpdateEnabled || !autoSyncEnabled) return;
 
-    const updateInterval = setInterval(() => {
-      console.log("Auto-updating RSS feeds...");
+    const now = new Date();
+    
+    // حساب وقت المزامنة التالي
+    const nextSync = new Date(now.getTime() + parseInt(syncInterval) * 60 * 1000);
+    setNextSyncTime(nextSync);
+    
+    const updateFeeds = async () => {
+      console.log("مزامنة خلاصات RSS...");
       const feedsToUpdate = feeds.filter(feed => feed.autoUpdate);
       
       if (feedsToUpdate.length > 0) {
-        Promise.all(feedsToUpdate.map(feed => fetchFeedContent(feed, false)))
-          .then(() => {
-            console.log("All auto-update feeds refreshed");
-            setFeeds(prev => prev.map(feed => 
-              feed.autoUpdate ? { ...feed, lastUpdated: new Date().toISOString() } : feed
-            ));
-          })
-          .catch(error => console.error("Error during auto-update:", error));
+        setIsLoading(true);
+        
+        try {
+          await Promise.all(feedsToUpdate.map(feed => fetchFeedContent(feed, false)));
+          
+          // تحديث آخر وقت تحديث لكل خلاصة
+          setFeeds(prev => prev.map(feed => 
+            feed.autoUpdate ? { ...feed, lastUpdated: new Date().toISOString() } : feed
+          ));
+          
+          // تحديث وقت المزامنة التالي
+          const currentTime = new Date();
+          const nextSyncTime = new Date(currentTime.getTime() + parseInt(syncInterval) * 60 * 1000);
+          setNextSyncTime(nextSyncTime);
+        } catch (error) {
+          console.error("خطأ أثناء التحديث التلقائي:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }, 3600000); // Check every hour (3600000 ms)
+    };
     
-    // In a real implementation, you would use a shorter interval for development
-    // and implement proper feed change detection
+    // تشغيل التحديث الأول فور تحميل المكون إذا كان التحديث التلقائي مفعلًا
+    updateFeeds();
     
-    return () => clearInterval(updateInterval);
-  }, [feeds, autoUpdateEnabled, addBatchArticles]);
+    const intervalId = setInterval(updateFeeds, parseInt(syncInterval) * 60 * 1000);
+    
+    // الاستماع للحدث المرسل من صفحة RssFeeds للتزامن
+    const handleAutoSync = () => {
+      console.log("استلام حدث مزامنة من الصفحة الرئيسية");
+      updateFeeds();
+    };
+    
+    window.addEventListener('rssAutoSync', handleAutoSync);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('rssAutoSync', handleAutoSync);
+    };
+  }, [feeds, autoUpdateEnabled, autoSyncEnabled, syncInterval, addBatchArticles]);
 
   // Fetch feed content with AI processing
   const fetchFeedContent = async (feed: RssFeed, showToast = true) => {
@@ -216,6 +284,26 @@ const RssFeedManager = () => {
     });
   };
 
+  // تنسيق وقت المزامنة القادمة
+  const formatNextSyncTime = () => {
+    if (!nextSyncTime) return "غير محدد";
+    
+    // حساب الوقت المتبقي
+    const now = new Date();
+    const diffMs = nextSyncTime.getTime() - now.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins <= 0) return "قريبًا";
+    
+    if (diffMins < 60) {
+      return `بعد ${diffMins} دقيقة`;
+    } else {
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `بعد ${hours} ساعة ${mins > 0 ? `و ${mins} دقيقة` : ''}`;
+    }
+  };
+
   return (
     <Card className="border-2 border-gray-100 shadow-lg">
       <CardHeader className="bg-gradient-to-r from-gray-50 to-white">
@@ -262,32 +350,70 @@ const RssFeedManager = () => {
           </div>
           
           <div className="mt-8">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-medium">الخلاصات المضافة</h3>
                 <Badge variant="outline" className="bg-gray-100">
                   {feeds.length}
                 </Badge>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <Switch
                     id="auto-update"
-                    checked={autoUpdateEnabled}
-                    onCheckedChange={setAutoUpdateEnabled}
+                    checked={autoUpdateEnabled && autoSyncEnabled}
+                    onCheckedChange={() => autoSyncEnabled && setAutoUpdateEnabled(!autoUpdateEnabled)}
+                    disabled={!autoSyncEnabled}
                   />
-                  <Label htmlFor="auto-update" className="text-sm font-medium mr-2 flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    تحديث تلقائي
+                  <Label htmlFor="auto-update" className="text-sm font-medium mr-2 flex items-center gap-1 text-blue-800">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    تحديث تلقائي للخلاصات
                   </Label>
                 </div>
+                
+                {autoUpdateEnabled && autoSyncEnabled && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="feed-sync-interval" className="text-sm whitespace-nowrap text-blue-800">
+                        كل:
+                      </Label>
+                      <Select
+                        value={syncInterval}
+                        onValueChange={setSyncInterval}
+                      >
+                        <SelectTrigger id="feed-sync-interval" className="w-[110px] text-sm border-blue-200 focus:ring-blue-300 bg-white">
+                          <SelectValue placeholder="اختر الفترة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 دقيقة</SelectItem>
+                          <SelectItem value="30">30 دقيقة</SelectItem>
+                          <SelectItem value="60">ساعة</SelectItem>
+                          <SelectItem value="120">ساعتين</SelectItem>
+                          <SelectItem value="360">6 ساعات</SelectItem>
+                          <SelectItem value="720">12 ساعة</SelectItem>
+                          <SelectItem value="1440">يوميًا</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {nextSyncTime && (
+                      <div className="text-sm flex items-center gap-1 text-blue-800 whitespace-nowrap">
+                        <Alarm className="h-4 w-4 text-blue-600" />
+                        <span>التحديث التالي: {formatNextSyncTime()}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                
                 <Button 
                   onClick={handleFetchAllFeeds} 
                   disabled={isLoading || feeds.length === 0}
                   variant="outline"
+                  size="sm"
                   className="border-news-accent text-news-accent hover:bg-news-accent hover:text-white"
                 >
-                  {isLoading ? "جاري التحديث..." : "تحديث جميع الخلاصات"}
+                  <RefreshCw className={`h-4 w-4 ml-1 ${isLoading ? 'animate-spin' : ''}`} />
+                  تحديث جميع الخلاصات
                 </Button>
               </div>
             </div>
@@ -304,7 +430,7 @@ const RssFeedManager = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-gray-800">{feed.name}</p>
-                        {feed.autoUpdate && (
+                        {feed.autoUpdate && autoUpdateEnabled && autoSyncEnabled && (
                           <Badge variant="outline" className="bg-green-50 text-green-700 text-xs">
                             تحديث تلقائي
                           </Badge>
@@ -320,8 +446,9 @@ const RssFeedManager = () => {
                       <div className="flex items-center space-x-2 space-x-reverse ml-2">
                         <Switch
                           id={`feed-auto-${feed.id}`}
-                          checked={!!feed.autoUpdate}
+                          checked={!!feed.autoUpdate && autoUpdateEnabled && autoSyncEnabled}
                           onCheckedChange={() => toggleFeedAutoUpdate(feed.id)}
+                          disabled={!autoUpdateEnabled || !autoSyncEnabled}
                           className="data-[state=checked]:bg-news-accent"
                         />
                         <Label htmlFor={`feed-auto-${feed.id}`} className="sr-only">
@@ -335,7 +462,7 @@ const RssFeedManager = () => {
                         disabled={isLoading}
                         className="border-news-accent text-news-accent hover:bg-news-accent hover:text-white"
                       >
-                        <RefreshCw className="h-4 w-4 mr-1" />
+                        <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
                         تحديث
                       </Button>
                       <Button 
@@ -344,7 +471,7 @@ const RssFeedManager = () => {
                         onClick={() => handleRemoveFeed(feed.id)}
                         className="bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 border-none"
                       >
-                        <Trash2 size={16} />
+                        حذف
                       </Button>
                     </div>
                   </div>

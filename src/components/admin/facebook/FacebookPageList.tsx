@@ -1,6 +1,7 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Facebook, RefreshCw, ExternalLink, Clock } from "lucide-react";
+import { Facebook, RefreshCw, ExternalLink, Clock, Alarm } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import { FacebookPage } from "../../../types/facebook";
 import { useArticles } from "../../../context/ArticleContext";
 import { useSimulateFacebookArticles } from "../../../hooks/useSimulateSources";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface FacebookPageListProps {
   facebookPages: FacebookPage[];
@@ -47,6 +49,9 @@ const FacebookPageList = ({
   const [newPageUrl, setNewPageUrl] = useState("");
   const { addBatchArticles } = useArticles();
   const { simulateFacebookArticles } = useSimulateFacebookArticles();
+  const [syncInterval, setSyncInterval] = useState("60"); // الفترة بين عمليات التحديث التلقائي بالدقائق (افتراضي: 60 دقيقة)
+  const [lastAutoSyncTime, setLastAutoSyncTime] = useState<Date | null>(null);
+  const [nextSyncTime, setNextSyncTime] = useState<Date | null>(null);
 
   // Function to simulate fetching from Facebook page
   const handleFacebookPageSync = async (pageId: string) => {
@@ -130,6 +135,88 @@ const FacebookPageList = ({
     });
   };
 
+  // إضافة تأثير لجدولة عمليات التحديث التلقائي بناءً على الفاصل الزمني المُحدد
+  useEffect(() => {
+    if (!autoSync) return;
+    
+    const now = new Date();
+    setLastAutoSyncTime(now);
+    
+    // حساب وقت المزامنة التالي
+    const nextSync = new Date(now.getTime() + parseInt(syncInterval) * 60 * 1000);
+    setNextSyncTime(nextSync);
+    
+    const syncPages = async () => {
+      const pagesToSync = facebookPages.filter(page => page.autoUpdate);
+      
+      if (pagesToSync.length > 0) {
+        console.log(`[${new Date().toLocaleTimeString()}] بدء المزامنة التلقائية لـ ${pagesToSync.length} صفحات فيسبوك`);
+        
+        for (const page of pagesToSync) {
+          try {
+            const articles = await simulateFacebookArticles(page.name);
+            
+            // Filter articles to only include those from startSyncDate or newer
+            const filteredArticles = articles.filter(article =>
+              new Date(article.date) >= startSyncDate
+            );
+            
+            if (filteredArticles.length > 0) {
+              addBatchArticles(filteredArticles);
+              
+              // Update last synced time
+              setFacebookPages(prev => prev.map(p =>
+                p.id === page.id ? { ...p, lastUpdated: new Date().toISOString() } : p
+              ));
+              
+              console.log(`[${new Date().toLocaleTimeString()}] تم مزامنة ${filteredArticles.length} منشورات من ${page.name}`);
+            }
+          } catch (error) {
+            console.error(`خطأ في مزامنة صفحة ${page.name}:`, error);
+          }
+        }
+        
+        const currentTime = new Date();
+        setLastAutoSyncTime(currentTime);
+        
+        // تحديث وقت المزامنة التالي
+        const nextSyncTime = new Date(currentTime.getTime() + parseInt(syncInterval) * 60 * 1000);
+        setNextSyncTime(nextSyncTime);
+        
+        toast.success(`تم تحديث ${pagesToSync.length} صفحات فيسبوك تلقائيًا`);
+      }
+    };
+    
+    // تشغيل المزامنة مباشرة عند التنشيط الأول
+    syncPages();
+    
+    // إعداد مؤقت للمزامنة الدورية
+    const intervalId = setInterval(syncPages, parseInt(syncInterval) * 60 * 1000);
+    
+    // تنظيف عند إلغاء تحميل المكون
+    return () => clearInterval(intervalId);
+  }, [autoSync, syncInterval, facebookPages, simulateFacebookArticles, addBatchArticles, startSyncDate]);
+  
+  // تنسيق وعرض وقت المزامنة القادمة
+  const formatNextSyncTime = () => {
+    if (!nextSyncTime) return "غير محدد";
+    
+    // حساب الوقت المتبقي
+    const now = new Date();
+    const diffMs = nextSyncTime.getTime() - now.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins <= 0) return "قريبًا";
+    
+    if (diffMins < 60) {
+      return `بعد ${diffMins} دقيقة`;
+    } else {
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `بعد ${hours} ساعة ${mins > 0 ? `و ${mins} دقيقة` : ''}`;
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Add New Page Form */}
@@ -157,24 +244,58 @@ const FacebookPageList = ({
         </Button>
       </div>
 
-      {/* Auto-Sync Toggle */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Auto-Sync Toggle and Settings */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-medium">الصفحات المضافة</h3>
           <Badge variant="outline" className="bg-gray-100">
             {facebookPages.length}
           </Badge>
         </div>
-        <div className="flex items-center space-x-2 space-x-reverse">
-          <Switch
-            id="auto-sync"
-            checked={autoSync}
-            onCheckedChange={setAutoSync}
-          />
-          <Label htmlFor="auto-sync" className="text-sm font-medium mr-2 flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            مزامنة تلقائية
-          </Label>
+        
+        <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Switch
+              id="auto-sync"
+              checked={autoSync}
+              onCheckedChange={setAutoSync}
+            />
+            <Label htmlFor="auto-sync" className="text-sm font-medium mr-2 flex items-center gap-1 text-blue-800">
+              <Clock className="h-4 w-4 text-blue-600" />
+              مزامنة تلقائية
+            </Label>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Label htmlFor="sync-interval" className="text-sm whitespace-nowrap text-blue-800">
+              كل:
+            </Label>
+            <Select
+              value={syncInterval}
+              onValueChange={setSyncInterval}
+              disabled={!autoSync}
+            >
+              <SelectTrigger id="sync-interval" className="w-[110px] text-sm border-blue-200 focus:ring-blue-300 bg-white">
+                <SelectValue placeholder="اختر الفترة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 دقيقة</SelectItem>
+                <SelectItem value="30">30 دقيقة</SelectItem>
+                <SelectItem value="60">ساعة</SelectItem>
+                <SelectItem value="120">ساعتين</SelectItem>
+                <SelectItem value="360">6 ساعات</SelectItem>
+                <SelectItem value="720">12 ساعة</SelectItem>
+                <SelectItem value="1440">يوميًا</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {autoSync && nextSyncTime && (
+            <div className="text-sm flex items-center gap-1 text-blue-800">
+              <Alarm className="h-4 w-4 text-blue-600" />
+              <span>التحديث التالي: {formatNextSyncTime()}</span>
+            </div>
+          )}
         </div>
       </div>
 
