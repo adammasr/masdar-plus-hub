@@ -12,10 +12,7 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // نظف بيانات الأدمن القديمة
     localStorage.removeItem("isAdmin");
-
     if (username === USER && password === PASS) {
       localStorage.setItem("isAdmin", "true");
       navigate("/admin", { replace: true });
