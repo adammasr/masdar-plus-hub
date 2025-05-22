@@ -3,9 +3,9 @@ import FacebookSection from "./facebook/FacebookSection";
 import WebhookSection from "./integrations/WebhookSection";
 import GoogleSheetSection from "./integrations/GoogleSheetSection";
 
-// حماية الواجهة: السماح فقط للأدمن adammasr
+// السماح فقط لمن لديه isAdmin = "true"
 const isAdmin = () => {
-  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+  return window?.localStorage?.getItem("isAdmin") === "true";
 };
 
 const WebhookSetup = () => {
