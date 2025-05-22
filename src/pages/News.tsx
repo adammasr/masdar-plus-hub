@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
 import { useArticles } from "../context/ArticleContext";
-import ArticleGrid from "../components/articles/ArticleGrid";
 import { Newspaper, AlertCircle, Calendar, Share2, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,26 +18,33 @@ const News = () => {
   const [page, setPage] = useState(1);
 
   // فلترة الأخبار حسب التصنيف والتاريخ
-  const newsArticles = useMemo(() =>
-    articles
-      .filter(a => a.category === "أخبار" && new Date(a.date) >= startSyncDate)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  , [articles]);
+  const newsArticles = useMemo(
+    () =>
+      articles
+        .filter((a) => a.category === "أخبار" && new Date(a.date) >= startSyncDate)
+        .sort(
+          (a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        ),
+    [articles]
+  );
 
   // قائمة المصادر
   const sources = useMemo(
-    () => [...new Set(newsArticles.map(article => article.source).filter(Boolean))],
+    () =>
+      [...new Set(newsArticles.map((article) => article.source).filter(Boolean))],
     [newsArticles]
   );
 
   // تطبيق الفلترة والبحث
   const filteredArticles = useMemo(() => {
     let result = newsArticles;
-    if (sourceFilter) result = result.filter(a => a.source === sourceFilter);
+    if (sourceFilter) result = result.filter((a) => a.source === sourceFilter);
     if (search.trim())
-      result = result.filter(a =>
-        a.title.toLowerCase().includes(search.toLowerCase()) ||
-        (a.excerpt?.toLowerCase().includes(search.toLowerCase()) ?? false)
+      result = result.filter(
+        (a) =>
+          a.title?.toLowerCase().includes(search.toLowerCase()) ||
+          (a.excerpt?.toLowerCase().includes(search.toLowerCase()) ?? false)
       );
     return result;
   }, [newsArticles, search, sourceFilter]);
@@ -51,13 +57,15 @@ const News = () => {
 
   const pagedArticles = filteredArticles.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // مشاركة رابط الخبر
+  // مشاركة رابط الخبر (مع معالجة أمان وفولباك)
   const handleShare = (url: string) => {
     if (navigator.share) {
       navigator.share({ url });
-    } else {
+    } else if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       alert("تم نسخ رابط الخبر!");
+    } else {
+      window.prompt("انسخ الرابط:", url);
     }
   };
 
@@ -109,8 +117,10 @@ const News = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="border border-gray-300 rounded-md px-9 py-2 w-full focus:outline-news-accent transition"
+              aria-label="بحث عن خبر"
+              dir="rtl"
             />
-            <Search size={18} className="absolute left-2 top-2.5 text-gray-400" />
+            <Search size={18} className="absolute left-2 top-2.5 text-gray-400 pointer-events-none" />
           </div>
           <div className="flex items-center gap-2">
             <Filter size={18} className="text-gray-400" />
@@ -118,6 +128,7 @@ const News = () => {
               value={sourceFilter}
               onChange={e => setSourceFilter(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-700"
+              aria-label="فلترة المصدر"
             >
               <option value="">كل المصادر</option>
               {sources.map((source, idx) => (
@@ -166,6 +177,7 @@ const News = () => {
                     className="ml-auto flex items-center gap-1 text-gray-400 hover:text-news-accent text-xs"
                     title="مشاركة الخبر"
                     onClick={() => handleShare(article.url || window.location.href)}
+                    aria-label="مشاركة الخبر"
                   >
                     <Share2 size={15} />
                     مشاركة
@@ -188,6 +200,7 @@ const News = () => {
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
             className="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            aria-label="الصفحة السابقة"
           >
             السابق
           </button>
@@ -196,6 +209,7 @@ const News = () => {
               key={i}
               className={`px-3 py-1 rounded-md border ${page === i + 1 ? "bg-news-accent text-white" : "bg-white text-gray-700 hover:bg-gray-50"}`}
               onClick={() => setPage(i + 1)}
+              aria-label={`الانتقال إلى صفحة ${i + 1}`}
             >
               {i + 1}
             </button>
@@ -204,6 +218,7 @@ const News = () => {
             disabled={page === pageCount}
             onClick={() => setPage(page + 1)}
             className="px-3 py-1 rounded-md border bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-40"
+            aria-label="الصفحة التالية"
           >
             التالي
           </button>
