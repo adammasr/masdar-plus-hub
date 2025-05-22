@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 // --- استيراد الإعلانات الديناميكية ومكون الإعلان ---
 import ads from "../../data/ads";
 import AdBanner from "../ads/AdBanner";
+import { Ad } from "../ads/types";
 
 interface LayoutProps {
   admin?: boolean;

@@ -1,21 +1,46 @@
-export interface Ad {
-  id: string;
-  title: string;
-  image?: string;
-  url?: string;
-  description?: string;
-  position?: "sidebar" | "header" | "footer" | "inline";
-  isActive?: boolean;
-}
 
-export const ads: Ad[] = [
+import { Ad } from "../components/ads/types";
+
+// Sample ads data
+const ads: Ad[] = [
   {
     id: "1",
-    title: "إعلان تجريبي - أعلن هنا!",
-    image: "/ads/sample.png",
-    url: "https://example.com",
-    description: "اعلن معنا على المصدر بلس للحصول على أفضل النتائج.",
+    title: "إعلان رئيسي",
+    imageUrl: "/placeholder.svg",
+    linkUrl: "https://example.com",
+    position: "header",
+    isActive: true,
+  },
+  {
+    id: "2",
+    title: "إعلان الشريط الجانبي",
+    imageUrl: "/placeholder.svg",
+    linkUrl: "https://example.com",
     position: "sidebar",
+    isActive: true,
+  },
+  {
+    id: "3",
+    title: "إعلان بين المقالات المميزة",
+    imageUrl: "/placeholder.svg",
+    linkUrl: "https://example.com",
+    position: "between-featured",
+    isActive: true,
+  },
+  {
+    id: "4",
+    title: "إعلان أعلى الشريط الجانبي",
+    imageUrl: "/placeholder.svg",
+    linkUrl: "https://example.com",
+    position: "sidebar-top",
+    isActive: true,
+  },
+  {
+    id: "5",
+    title: "إعلان أسفل الشريط الجانبي",
+    imageUrl: "/placeholder.svg",
+    linkUrl: "https://example.com",
+    position: "sidebar-bottom",
     isActive: true,
   },
 ];
