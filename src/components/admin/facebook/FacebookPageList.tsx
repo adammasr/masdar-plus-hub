@@ -20,11 +20,9 @@ interface FacebookPageListProps {
   startSyncDate: Date;
 }
 
-// حماية مكون قائمة صفحات فيسبوك: الظهور فقط للمستخدم adammasr
+// حماية مكون قائمة صفحات فيسبوك: السماح فقط لمن لديه isAdmin = "true"
 const isAdmin = () => {
-  // لاحظ: يمكنك تخصيص هذه الدالة أو جلب اسم المستخدم من نظام المصادقة الحقيقي لديك
-  // حالياً، سنستخدم متغير window فقط للمثال، ويفترض أن يتم جلب اسم المستخدم من السياق أو مصادقة حقيقية
-  return window?.localStorage?.getItem("username") === "adammasr" || (window as any).currentUser === "adammasr";
+  return window?.localStorage?.getItem("isAdmin") === "true";
 };
 
 const FacebookPageList = ({
