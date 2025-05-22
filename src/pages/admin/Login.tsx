@@ -1,19 +1,21 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const USER = "admin";
 const PASS = "01208213342tozfek400";
 
-const Login = ({ onLogin }: { onLogin: () => void }) => {
+const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (username === USER && password === PASS) {
       localStorage.setItem("isAdmin", "true");
-      localStorage.setItem("username", "adammasr"); // أضف هذا السطر
-      onLogin();
+      localStorage.setItem("username", "adammasr");
+      navigate("/admin");
     } else {
       setError("اسم المستخدم أو كلمة المرور غير صحيحة");
     }
