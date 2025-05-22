@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Facebook, RefreshCw, ExternalLink, Clock, Alarm } from "lucide-react";
+import { Facebook, RefreshCw, ExternalLink, Clock, AlarmClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -292,7 +291,7 @@ const FacebookPageList = ({
           
           {autoSync && nextSyncTime && (
             <div className="text-sm flex items-center gap-1 text-blue-800">
-              <Alarm className="h-4 w-4 text-blue-600" />
+              <AlarmClock className="h-4 w-4 text-blue-600" />
               <span>التحديث التالي: {formatNextSyncTime()}</span>
             </div>
           )}
