@@ -4,24 +4,10 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
-/**
- * Root of the AlertDialog.
- */
 const AlertDialog = AlertDialogPrimitive.Root;
-
-/**
- * Trigger for opening the AlertDialog.
- */
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
-
-/**
- * Portal for rendering AlertDialog in a React Portal.
- */
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
-/**
- * Overlay for AlertDialog, with smooth background and transitions.
- */
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
@@ -37,9 +23,6 @@ const AlertDialogOverlay = React.forwardRef<
 ));
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 
-/**
- * Content area of the AlertDialog. Centers, animates, and styles the dialog.
- */
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
@@ -60,9 +43,6 @@ const AlertDialogContent = React.forwardRef<
 ));
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
-/**
- * Header for the AlertDialog.
- */
 const AlertDialogHeader = ({
   className,
   ...props
@@ -77,9 +57,6 @@ const AlertDialogHeader = ({
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
-/**
- * Footer for the AlertDialog, aligns actions appropriately.
- */
 const AlertDialogFooter = ({
   className,
   ...props
@@ -94,9 +71,6 @@ const AlertDialogFooter = ({
 );
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
-/**
- * Title of the AlertDialog, accessible and prominent.
- */
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
@@ -109,9 +83,6 @@ const AlertDialogTitle = React.forwardRef<
 ));
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
 
-/**
- * Description text for the AlertDialog.
- */
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
@@ -125,9 +96,6 @@ const AlertDialogDescription = React.forwardRef<
 AlertDialogDescription.displayName =
   AlertDialogPrimitive.Description.displayName;
 
-/**
- * Main action button for the AlertDialog.
- */
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
@@ -140,9 +108,6 @@ const AlertDialogAction = React.forwardRef<
 ));
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 
-/**
- * Cancel button for the AlertDialog.
- */
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
