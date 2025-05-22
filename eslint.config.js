@@ -23,6 +23,8 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      // إذا أردت تفعيل التحذير على المتغيرات غير المستخدمة فعّل السطر التالي
+      // "@typescript-eslint/no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": "off",
     },
   }
