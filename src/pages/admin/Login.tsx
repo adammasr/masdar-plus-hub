@@ -12,6 +12,10 @@ const Login = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // ننظف بيانات الأدمن القديمة أولاً لمنع التعارض
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("username");
+
     if (username === USER && password === PASS) {
       localStorage.setItem("isAdmin", "true");
       localStorage.setItem("username", "adammasr");
