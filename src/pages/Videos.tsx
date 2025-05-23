@@ -11,21 +11,27 @@ type VideoItem = {
 };
 
 const YOUTUBE_RSS_URL =
-  "https://www.youtube.com/feeds/videos.xml?channel_id=UCyP7FZ2yK8yigK9jO6-huNw";
+  "https://www.youtube.com/feeds/videos.xml?channel_id=UCOsJ64U6e15Q1t64UK2FTgQ";
 
+// نستخدم خدمة خارجية لتحويل RSS إلى JSON (حل عملي وسريع)
 const parseYouTubeRSS = async (): Promise<VideoItem[]> => {
-  const response = await fetch(
-    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(YOUTUBE_RSS_URL)}`
-  );
-  const data = await response.json();
-  if (!data.items) return [];
-  return data.items.map((item: any) => ({
-    id: item.guid.split(":").pop(),
-    title: item.title,
-    publishedAt: item.pubDate,
-    thumbnail: item.thumbnail,
-    description: item.description,
-  }));
+  try {
+    // استخدم خدمة rss2json (مجانًا)
+    const response = await fetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(YOUTUBE_RSS_URL)}`
+    );
+    const data = await response.json();
+    if (!data.items) return [];
+    return data.items.map((item: any) => ({
+      id: item.guid.split(":").pop(),
+      title: item.title,
+      publishedAt: item.pubDate,
+      thumbnail: item.thumbnail,
+      description: item.description,
+    }));
+  } catch {
+    return [];
+  }
 };
 
 const Videos = () => {
@@ -33,7 +39,7 @@ const Videos = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    parseYouTubeRSS().then(videos => {
+    parseYouTubeRSS().then((videos) => {
       setVideos(videos);
       setLoading(false);
     });
@@ -49,10 +55,10 @@ const Videos = () => {
         <p className="text-gray-600">أحدث مقاطع الفيديو من قناة اليوتيوب</p>
       </div>
       {loading && <div>جاري التحميل...</div>}
-      {!loading && videos.length === 0 && <div>لا توجد فيديوهات متاحة حاليا.</div>}
+      {!loading && videos.length === 0 && <div>لا توجد فيديوهات متاحة حالياً.</div>}
       {!loading && videos.length > 0 && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {videos.map((video, idx) => (
+          {videos.map((video) => (
             <div
               key={video.id}
               className="bg-white rounded-lg overflow-hidden shadow-md flex flex-col"
