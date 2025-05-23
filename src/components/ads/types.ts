@@ -1,15 +1,8 @@
 
-// Define the ad position types
-export type AdPosition = 
-  | "header" 
-  | "footer" 
-  | "sidebar" 
-  | "inline" 
-  | "between-featured" 
-  | "sidebar-top" 
-  | "sidebar-bottom";
+// Ad positions available in the application
+export type AdPosition = "header" | "footer" | "sidebar" | "article" | "before-content" | "after-content";
 
-// This interface makes sure we're consistent with the Ad type across the application
+// Ad structure
 export interface Ad {
   id: string;
   title: string;
@@ -17,4 +10,12 @@ export interface Ad {
   linkUrl?: string;
   position: AdPosition;
   isActive: boolean;
+}
+
+// Configuration for where ads should appear
+export interface AdConfig {
+  enableHeaderAds: boolean;
+  enableFooterAds: boolean;
+  enableSidebarAds: boolean;
+  enableArticleAds: boolean;
 }
