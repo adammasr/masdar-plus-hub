@@ -17,16 +17,23 @@ const Layout = ({ isAdmin = false }: LayoutProps) => {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      {isAdmin ? (
-        <div className="flex flex-1 pt-16">
-          <AdminSidebar />
-          <main className="flex-1 p-4 ml-0 md:ml-64">
-            <Outlet />
-          </main>
-        </div>
-      ) : (
+  <div className="flex min-h-screen flex-col">
+    <Header />
+    {isAdmin ? (
+      <div className="flex flex-1 pt-16">
+        <AdminSidebar />
+        <main className="flex-1 p-4 ml-0 md:ml-64">
+          <Outlet />
+        </main>
+      </div>
+    ) : (
+      <main className="flex-1 pt-16">
+        <Outlet />
+      </main>
+    )}
+    <Footer />
+  </div>
+);
         <main className="flex-1 pt-16">
           <Outlet />
         </main>
