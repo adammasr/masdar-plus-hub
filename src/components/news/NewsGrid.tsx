@@ -1,6 +1,7 @@
 
 import { Article } from "../../context/ArticleContext";
 import ArticleCard from "../articles/ArticleCard";
+import { AdSlot } from "../ads/AdService";
 
 interface NewsGridProps {
   articles: Article[];
@@ -16,14 +17,34 @@ const NewsGrid = ({ articles }: NewsGridProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {articles.map(article => (
-        <ArticleCard 
-          key={article.id} 
-          article={article} 
-          detailUrl={`/news/${article.id}`}
-        />
-      ))}
+    <div className="relative">
+      {/* إعلان أعلى قائمة الأخبار */}
+      <AdSlot position="header" className="mb-6" />
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {articles.map((article, index) => {
+          // إضافة إعلان بعد كل 4 أخبار
+          const showAdAfter = (index > 0 && (index + 1) % 4 === 0);
+          
+          return (
+            <React.Fragment key={article.id}>
+              <ArticleCard 
+                article={article} 
+                detailUrl={`/news/${article.id}`}
+              />
+              
+              {showAdAfter && (
+                <div className="col-span-full my-4">
+                  <AdSlot position="article" />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      
+      {/* إعلان أسفل قائمة الأخبار */}
+      <AdSlot position="footer" className="mt-6" />
     </div>
   );
 };

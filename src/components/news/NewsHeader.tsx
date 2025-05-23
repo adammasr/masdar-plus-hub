@@ -1,5 +1,6 @@
 
 import { Newspaper, AlertCircle, Calendar } from "lucide-react";
+import { AdSlot } from "../ads/AdService";
 
 interface NewsHeaderProps {
   startSyncDate: Date;
@@ -32,6 +33,11 @@ const NewsHeader = ({ startSyncDate, latestNewsTitle }: NewsHeaderProps) => {
         <div className="mr-0 md:mr-2 mt-2 md:mt-0 overflow-hidden whitespace-nowrap text-ellipsis w-full">
           {latestNewsTitle || "لا توجد أخبار جديدة"}
         </div>
+      </div>
+      
+      {/* إعلان أعلى صفحة الأخبار */}
+      <div className="mt-6">
+        <AdSlot position="header" />
       </div>
     </div>
   );

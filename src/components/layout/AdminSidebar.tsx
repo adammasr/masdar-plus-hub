@@ -1,30 +1,54 @@
 
 import { Link, useLocation } from "react-router-dom";
-// استيراد السياق الخاص بالمصادقة أو المستخدم (عدّل المسار حسب مشروعك)
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext"; 
+import { 
+  LayoutDashboard, 
+  FileText, 
+  PlusCircle, 
+  Link as LinkIcon, 
+  FolderTree, 
+  UserCog,
+  LogOut,
+  BadgeDollarSign
+} from "lucide-react";
 
 const LOGO_SRC = "/logo.png";
 
 const AdminSidebar = () => {
   const location = useLocation();
-  // نفترض أن useAuth() يرجع كائن فيه user وصلاحياته
   const { user } = useAuth() || {};
+  const [adminUsername, setAdminUsername] = useState<string | null>(null);
 
-  // تحقق من وجود المستخدم وأن دوره "admin" أو لديه صلاحية الوصول للإدارة
-  if (!user || !["admin", "superadmin"].includes(user?.role || '')) {
-    // يمكنك هنا توجيه المستخدم للصفحة الرئيسية أو صفحة تسجيل الدخول إذا لزم الأمر
+  useEffect(() => {
+    // استرجاع اسم المستخدم من التخزين المحلي
+    const username = localStorage.getItem("adminUsername");
+    setAdminUsername(username);
+  }, []);
+
+  // التحقق من وجود المستخدم وأن دوره "admin" أو لديه صلاحية الوصول للإدارة
+  if (!user && !localStorage.getItem("isAdmin")) {
     return null;
   }
 
   const menuItems = [
-    { title: "لوحة التحكم", path: "/admin", icon: "🏠" },
-    { title: "المقالات", path: "/admin/articles", icon: "📰" },
-    { title: "إضافة مقال جديد", path: "/admin/articles/new", icon: "➕" },
-    { title: "روابط RSS", path: "/admin/rss-feeds", icon: "🔗" },
-    { title: "الأقسام", path: "/admin/categories", icon: "📂" },
+    { title: "لوحة التحكم", path: "/admin", icon: <LayoutDashboard size={20} /> },
+    { title: "المقالات", path: "/admin/articles", icon: <FileText size={20} /> },
+    { title: "إضافة مقال جديد", path: "/admin/articles/new", icon: <PlusCircle size={20} /> },
+    { title: "روابط RSS", path: "/admin/rss-feeds", icon: <LinkIcon size={20} /> },
+    { title: "الأقسام", path: "/admin/categories", icon: <FolderTree size={20} /> },
+    { title: "إدارة الإعلانات", path: "/admin/ads", icon: <BadgeDollarSign size={20} /> },
+    { title: "المستخدمين", path: "/admin/users", icon: <UserCog size={20} /> },
   ];
 
   const isActive = (path: string) => location.pathname.startsWith(path);
+  
+  const handleLogout = () => {
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUsername");
+    window.location.href = "/admin/login";
+  };
 
   return (
     <aside
@@ -49,8 +73,16 @@ const AdminSidebar = () => {
           المصدر بلس
         </span>
       </div>
+      
+      {/* معلومات المستخدم */}
+      {adminUsername && (
+        <div className="px-6 py-3 mb-2 border-b border-gray-200/60">
+          <div className="text-sm text-gray-700">مرحباً بك</div>
+          <div className="font-semibold text-news-accent">{adminUsername}</div>
+        </div>
+      )}
 
-      <nav className="flex-1 px-4 py-3">
+      <nav className="flex-1 px-4 py-3 overflow-y-auto">
         <ul className="space-y-1">
           {menuItems.map((item) => (
             <li key={item.title}>
@@ -77,8 +109,19 @@ const AdminSidebar = () => {
         </ul>
       </nav>
 
+      {/* زر تسجيل الخروج */}
+      <div className="px-4 py-4 mt-auto border-t border-gray-200/60">
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-2 w-full text-gray-700 hover:text-red-600 rounded-lg transition-colors"
+        >
+          <LogOut size={20} />
+          <span className="font-medium">تسجيل الخروج</span>
+        </button>
+      </div>
+
       {/* زخرفة شفافة أسفل الشريط */}
-      <div className="mt-auto flex justify-center items-end pb-6 opacity-20 pointer-events-none select-none">
+      <div className="mt-2 flex justify-center items-end pb-6 opacity-20 pointer-events-none select-none">
         <img
           src={LOGO_SRC}
           alt="ALMASDAR PLUS Logo Decorative"
