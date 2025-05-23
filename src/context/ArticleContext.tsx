@@ -15,6 +15,7 @@ export interface Article {
   readingTime?: number;
   originalSource?: string;
   isTranslated?: boolean;
+  featured?: boolean; // Added the featured property
 }
 
 interface ArticleContextType {

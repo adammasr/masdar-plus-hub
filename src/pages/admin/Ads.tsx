@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PlusCircle, X, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +16,10 @@ const AdPositionLabels: Record<AdPosition, string> = {
   "sidebar": "الشريط الجانبي",
   "article": "داخل المقالات",
   "before-content": "قبل المحتوى",
-  "after-content": "بعد المحتوى"
+  "after-content": "بعد المحتوى",
+  "between-featured": "بين المقالات المميزة",
+  "sidebar-top": "أعلى الشريط الجانبي",
+  "sidebar-bottom": "أسفل الشريط الجانبي"
 };
 
 const Ads = () => {
