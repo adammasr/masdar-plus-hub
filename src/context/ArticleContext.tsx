@@ -6,12 +6,15 @@ export interface Article {
   title: string;
   content: string;
   excerpt: string;
-  image: string;
+  image?: string;
   category: string;
   date: string;
   source?: string;
-  featured?: boolean;
   videoUrl?: string;
+  tags?: string[];
+  readingTime?: number;
+  originalSource?: string;
+  isTranslated?: boolean;
 }
 
 interface ArticleContextType {

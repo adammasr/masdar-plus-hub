@@ -2,7 +2,7 @@
 import { Ad } from "../components/ads/types";
 
 // Sample ads data
-const ads: Ad[] = [
+export const mockAds: Ad[] = [
   {
     id: "1",
     title: "إعلان رئيسي",
@@ -45,4 +45,4 @@ const ads: Ad[] = [
   },
 ];
 
-export default ads;
+export default mockAds;

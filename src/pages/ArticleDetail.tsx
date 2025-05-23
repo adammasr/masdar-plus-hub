@@ -11,14 +11,15 @@ import {
   Twitter, 
   Link as LinkIcon, 
   ExternalLink,
-  Tag
+  Tag,
+  Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import ArticleCard from "../components/articles/ArticleCard";
+import { estimateReadingTime } from "../utils/newsFormatter";
 
-// مسار اللوجو
 const LOGO_SRC = "/logo.png";
 
 const ArticleDetail = () => {
@@ -27,13 +28,26 @@ const ArticleDetail = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   
-  // الحصول على المقال الحالي
   const article = articles.find(a => a.id === articleId);
   
-  // الحصول على مقالات ذات صلة من نفس الفئة
+  // الحصول على مقالات ذات صلة بناءً على الوسوم والفئة
   const relatedArticles = articles
-    .filter(a => a.category === article?.category && a.id !== articleId)
+    .filter(a => {
+      if (a.id === articleId) return false;
+      
+      // أولوية للمقالات التي تحتوي على نفس الوسوم
+      if (article?.tags && a.tags) {
+        const sharedTags = article.tags.filter(tag => a.tags?.includes(tag));
+        if (sharedTags.length > 0) return true;
+      }
+      
+      // ثم المقالات من نفس الفئة
+      return a.category === article?.category;
+    })
     .slice(0, 3);
+  
+  // حساب وقت القراءة
+  const readingTime = article ? estimateReadingTime(article.content) : 0;
   
   // تنسيق التاريخ
   const formatDate = (dateString: string) => {
@@ -63,7 +77,6 @@ const ArticleDetail = () => {
         });
         break;
       default:
-        // المشاركة العامة
         if (navigator.share) {
           navigator.share({ title, url })
             .catch(err => console.error("حدث خطأ أثناء المشاركة:", err));
@@ -74,21 +87,18 @@ const ArticleDetail = () => {
     }
   };
   
-  // تحميل المقال
   useEffect(() => {
     if (articleId) {
       setLoading(false);
     }
   }, [articleId]);
   
-  // إذا لم يوجد المقال
   useEffect(() => {
     if (!loading && !article) {
       navigate("/news", { replace: true });
     }
   }, [article, loading, navigate]);
   
-  // تغيير عنوان الصفحة
   useEffect(() => {
     if (article) {
       document.title = `${article.title} | مصدر بلس`;
@@ -111,11 +121,22 @@ const ArticleDetail = () => {
   }
   
   if (!article) {
-    return null; // سنتم إعادة التوجيه قبل ذلك بفضل useEffect
+    return null;
   }
   
   return (
     <div className="py-6 max-w-5xl mx-auto px-4">
+      {/* مسار التنقل (Breadcrumbs) */}
+      <nav className="mb-4 text-sm text-gray-500">
+        <Link to="/" className="hover:text-news-accent">الرئيسية</Link>
+        <span className="mx-2">›</span>
+        <Link to="/news" className="hover:text-news-accent">الأخبار</Link>
+        <span className="mx-2">›</span>
+        <Link to={`/news?category=${article.category}`} className="hover:text-news-accent">{article.category}</Link>
+        <span className="mx-2">›</span>
+        <span className="text-gray-700">{article.title.substring(0, 50)}...</span>
+      </nav>
+
       {/* زر العودة والمشاركة */}
       <div className="flex justify-between items-center mb-6">
         <Link 
@@ -162,21 +183,26 @@ const ArticleDetail = () => {
       {/* بطاقة المقال الرئيسية */}
       <Card className="overflow-hidden border-0 shadow-lg rounded-2xl">
         <div className="relative">
-          {/* صورة المقال */}
+          {/* صورة المقال مع تحميل تأخيري */}
           <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] relative">
             <img
               src={article.image || LOGO_SRC}
               alt={article.title}
               className="w-full h-full object-cover"
-              loading="eager"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
           </div>
           
           {/* معلومات المقال فوق الصورة */}
           <div className="absolute bottom-0 right-0 w-full p-6 text-white">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge className="bg-news-accent border-none px-3">{article.category}</Badge>
+              {article.isTranslated && (
+                <Badge variant="outline" className="bg-blue-500/80 border-none text-white">
+                  مترجم
+                </Badge>
+              )}
               {article.source && (
                 <Badge variant="outline" className="bg-white/10 border-white/20">
                   <ExternalLink className="w-3 h-3 ml-1" /> {article.source}
@@ -184,49 +210,83 @@ const ArticleDetail = () => {
               )}
             </div>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-2">{article.title}</h1>
-            <div className="flex items-center text-gray-100 text-sm mt-2">
-              <Calendar className="h-4 w-4 ml-1" />
-              <span>{formatDate(article.date)}</span>
-              <span className="mx-2">•</span>
-              <Clock className="h-4 w-4 ml-1" />
-              <span>5 دقائق للقراءة</span>
+            <div className="flex items-center text-gray-100 text-sm mt-2 flex-wrap gap-4">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 ml-1" />
+                <span>{formatDate(article.date)}</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 ml-1" />
+                <span>{readingTime} دقائق للقراءة</span>
+              </div>
+              <div className="flex items-center">
+                <Eye className="h-4 w-4 ml-1" />
+                <span>وقت القراءة المقدر</span>
+              </div>
             </div>
           </div>
         </div>
         
         <CardContent className="p-6 md:p-8">
           {/* المقدمة */}
-          <div className="text-lg text-gray-600 border-r-4 border-news-accent pr-4 py-2 my-6">
-            <p>{article.excerpt}</p>
+          <div className="text-lg text-gray-600 border-r-4 border-news-accent pr-4 py-2 my-6 bg-gray-50 rounded">
+            <p className="font-medium">{article.excerpt}</p>
           </div>
+
+          {/* إبراز المصدر الأصلي */}
+          {article.originalSource && (
+            <div className="mb-6 p-4 bg-blue-50 border-r-4 border-blue-400 rounded">
+              <p className="text-blue-800 text-sm">
+                <strong>المصدر الأصلي:</strong> {article.originalSource}
+                {article.isTranslated && <span className="mr-2">(تم الترجمة والتحرير)</span>}
+              </p>
+            </div>
+          )}
           
           {/* محتوى المقال */}
-          <div className="prose prose-lg max-w-none">
+          <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed">
             <div dangerouslySetInnerHTML={{ __html: article.content }} />
           </div>
           
-          {/* الكلمات المفتاحية */}
+          {/* الكلمات المفتاحية والوسوم */}
           <div className="mt-10 pt-6 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-4">
               <Tag className="text-gray-400" size={18} />
-              <span className="text-gray-500">الكلمات المفتاحية:</span>
-              <div className="flex flex-wrap gap-2">
-                <Link 
-                  to={`/news?tag=${article.category}`}
-                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-700"
-                >
-                  #{article.category}
-                </Link>
-                {article.source && (
-                  <Link 
-                    to={`/news?source=${article.source}`}
-                    className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-700"
-                  >
-                    #{article.source.replace(/\s+/g, '_')}
-                  </Link>
-                )}
-              </div>
+              <span className="text-gray-500 font-medium">الكلمات المفتاحية:</span>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <Link 
+                to={`/news?category=${article.category}`}
+                className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full text-sm text-gray-700 transition-colors"
+              >
+                #{article.category}
+              </Link>
+              {article.tags && article.tags.map(tag => (
+                <Link 
+                  key={tag}
+                  to={`/news?tag=${tag}`}
+                  className="bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-full text-sm text-blue-700 transition-colors"
+                >
+                  #{tag}
+                </Link>
+              ))}
+              {article.source && (
+                <Link 
+                  to={`/news?source=${article.source}`}
+                  className="bg-green-100 hover:bg-green-200 px-3 py-1 rounded-full text-sm text-green-700 transition-colors"
+                >
+                  #{article.source.replace(/\s+/g, '_')}
+                </Link>
+              )}
+            </div>
+          </div>
+          
+          {/* سؤال مثير للنقاش */}
+          <div className="mt-8 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
+            <h3 className="font-bold text-purple-800 mb-2">ما رأيك؟</h3>
+            <p className="text-purple-700">
+              شاركنا رأيك حول هذا الموضوع في التعليقات أدناه. هل تعتقد أن هذا التطور سيؤثر على مستقبل المجال؟
+            </p>
           </div>
           
           {/* زر المشاركة */}

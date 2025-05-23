@@ -1,6 +1,6 @@
 
 // Ad positions available in the application
-export type AdPosition = "header" | "footer" | "sidebar" | "article" | "before-content" | "after-content";
+export type AdPosition = "header" | "footer" | "sidebar" | "article" | "before-content" | "after-content" | "between-featured" | "sidebar-top" | "sidebar-bottom";
 
 // Ad structure
 export interface Ad {
