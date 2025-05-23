@@ -1,29 +1,44 @@
-import { useArticles } from "../context/ArticleContext";
-import ArticleGrid from "../components/articles/ArticleGrid";
-import { Video, Play } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+type VideoItem = {
+  id: string;
+  title: string;
+  publishedAt: string;
+  thumbnail: string;
+  description: string;
+};
+
+const YOUTUBE_RSS_URL =
+  "https://www.youtube.com/feeds/videos.xml?channel_id=UCyP7FZ2yK8yigK9jO6-huNw";
+
+const parseYouTubeRSS = async (): Promise<VideoItem[]> => {
+  const response = await fetch(
+    `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(YOUTUBE_RSS_URL)}`
+  );
+  const data = await response.json();
+  if (!data.items) return [];
+  return data.items.map((item: any) => ({
+    id: item.guid.split(":").pop(),
+    title: item.title,
+    publishedAt: item.pubDate,
+    thumbnail: item.thumbnail,
+    description: item.description,
+  }));
+};
+
 const Videos = () => {
-  const { articles } = useArticles();
-  
-  const videoArticles = articles
-    .filter(article => article.videoUrl)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  
-  // Featured video (if available)
-  const featuredVideo = videoArticles.length > 0 ? videoArticles[0] : null;
-  // Rest of the videos
-  const restOfVideos = videoArticles.slice(1);
-  
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ar-EG', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    parseYouTubeRSS().then(videos => {
+      setVideos(videos);
+      setLoading(false);
     });
-  };
-  
+  }, []);
+
   return (
     <div className="py-6">
       <div className="mb-8">
@@ -31,48 +46,57 @@ const Videos = () => {
           <Video className="ml-2 text-news-accent" />
           فيديوهات
         </h1>
-        <p className="text-gray-600">
-          أحدث مقاطع الفيديو والتقارير المصورة
-        </p>
+        <p className="text-gray-600">أحدث مقاطع الفيديو من قناة اليوتيوب</p>
       </div>
-      
-      {/* Featured Video */}
-      {featuredVideo && (
-        <div className="bg-white rounded-lg overflow-hidden shadow-md mb-8">
-          <div className="relative aspect-video">
-            <img 
-              src={featuredVideo.image} 
-              alt={featuredVideo.title} 
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <Button className="bg-news-accent hover:bg-red-700 text-white rounded-full h-16 w-16 flex items-center justify-center">
-                <Play className="h-8 w-8" />
-              </Button>
+      {loading && <div>جاري التحميل...</div>}
+      {!loading && videos.length === 0 && <div>لا توجد فيديوهات متاحة حاليا.</div>}
+      {!loading && videos.length > 0 && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {videos.map((video, idx) => (
+            <div
+              key={video.id}
+              className="bg-white rounded-lg overflow-hidden shadow-md flex flex-col"
+            >
+              <div className="relative aspect-video">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${video.id}`}
+                  title={video.title}
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+              <div className="p-4 flex-1 flex flex-col">
+                <span className="bg-news-accent/10 text-news-accent text-xs py-1 px-2 rounded-full mb-2">
+                  {new Date(video.publishedAt).toLocaleDateString("ar-EG", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+                <h2 className="text-lg font-bold mb-2">{video.title}</h2>
+                <div
+                  className="text-gray-600 text-sm line-clamp-2"
+                  dangerouslySetInnerHTML={{ __html: video.description }}
+                />
+                <Button
+                  className="mt-4 bg-news-accent hover:bg-red-700"
+                  asChild
+                >
+                  <a
+                    href={`https://www.youtube.com/watch?v=${video.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    مشاهدة على يوتيوب
+                  </a>
+                </Button>
+              </div>
             </div>
-          </div>
-          <div className="p-6">
-            <div className="mb-2">
-              <span className="bg-news-accent/10 text-news-accent text-xs py-1 px-2 rounded-full">
-                فيديو مميز
-              </span>
-              <span className="mr-2 text-gray-500 text-sm">
-                {formatDate(featuredVideo.date)}
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold mb-4">{featuredVideo.title}</h2>
-            <p className="text-gray-600">{featuredVideo.excerpt}</p>
-            
-            <Button className="mt-4 bg-news-accent hover:bg-red-700">
-              <Play className="ml-2 h-4 w-4" />
-              مشاهدة الفيديو
-            </Button>
-          </div>
+          ))}
         </div>
       )}
-      
-      {/* Rest of Videos */}
-      <ArticleGrid articles={restOfVideos} title="أحدث الفيديوهات" />
     </div>
   );
 };
