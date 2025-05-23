@@ -11,6 +11,9 @@ import {
   Rss
 } from "lucide-react";
 
+// استخدام نفس مسار الشعار من الهيدر
+const LOGO_SRC = "/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png";
+
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-12 mt-16">
@@ -19,7 +22,15 @@ const Footer = () => {
           {/* معلومات الموقع */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center mb-4">
-              <img src="/logo.png" alt="مصدر بلس" className="w-10 h-10 ml-3" />
+              <img 
+                src={LOGO_SRC} 
+                alt="مصدر بلس" 
+                className="w-10 h-10 ml-3 rounded-lg object-contain bg-white/10 p-1" 
+                onError={(e) => {
+                  console.log('Footer logo failed to load');
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
               <h3 className="text-2xl font-bold">مصدر بلس</h3>
             </div>
             <p className="text-gray-300 mb-4 leading-relaxed">

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
 
-// مسار اللوجو (خصّصه حسب موقعك)
+// مسار اللوجو المحدث
 const LOGO_SRC = "/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png";
 
 const Header = () => {
@@ -58,7 +58,7 @@ const Header = () => {
             </Link>
             {/* رابط دخول (استبدله حسب نظام المصادقة لديك) */}
             <Link
-              to="/login"
+              to="/admin/login"
               className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
             >
               <LogIn size={15} className="ml-0.5 inline" />
@@ -78,6 +78,10 @@ const Header = () => {
                 alt="المصدر بلس"
                 className="h-14 w-14 md:h-20 md:w-20 rounded-xl shadow-lg shadow-news-accent/10 bg-white object-contain border-2 border-white transition group-hover:scale-105"
                 style={{ filter: "drop-shadow(0 0 8px #db1f2d22)" }}
+                onError={(e) => {
+                  console.log('Logo failed to load, falling back to text');
+                  e.currentTarget.style.display = 'none';
+                }}
               />
               {/* زخرفة خلفية شفافة للوجو */}
               <span className="absolute top-6 left-1/2 -translate-x-1/2 opacity-10 blur-md z-0 pointer-events-none hidden md:block">
