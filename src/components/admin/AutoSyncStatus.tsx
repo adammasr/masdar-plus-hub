@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { RefreshCw, CheckCircle, AlertCircle, Clock, TrendingUp, Database } from "lucide-react";
 import { toast } from "sonner";
 
 const AutoSyncStatus = () => {
@@ -15,41 +16,94 @@ const AutoSyncStatus = () => {
     localStorage.getItem('lastAutoSync')
   );
   const [isManualSyncing, setIsManualSyncing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [articleStats, setArticleStats] = useState({
+    total: 0,
+    today: 0,
+    thisWeek: 0
+  });
 
   useEffect(() => {
-    const handleArticlesUpdate = () => {
+    const updateStats = () => {
+      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+      const today = new Date().toISOString().split('T')[0];
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      
+      setArticleStats({
+        total: articles.length,
+        today: articles.filter((a: any) => a.date === today).length,
+        thisWeek: articles.filter((a: any) => new Date(a.date) >= weekAgo).length
+      });
+    };
+
+    updateStats();
+
+    const handleArticlesUpdate = (event: any) => {
       const now = new Date().toISOString();
       setLastSync(now);
       localStorage.setItem('lastAutoSync', now);
+      updateStats();
+      
+      if (event.detail?.newCount > 0) {
+        toast.success(`تم إضافة ${event.detail.newCount} مقال جديد`, {
+          description: "تم تحديث الموقع تلقائياً",
+        });
+      }
     };
 
     window.addEventListener('articlesUpdated', handleArticlesUpdate);
-    return () => window.removeEventListener('articlesUpdated', handleArticlesUpdate);
+    
+    return () => {
+      window.removeEventListener('articlesUpdated', handleArticlesUpdate);
+    };
   }, []);
 
   const handleConfigChange = (newConfig: any) => {
     const updatedConfig = { ...config, ...newConfig };
     setConfig(updatedConfig);
     AutoSyncService.getInstance().updateConfig(updatedConfig);
+    
+    toast.success('تم تحديث إعدادات المزامنة');
   };
 
   const handleManualSync = async () => {
     setIsManualSyncing(true);
+    setSyncProgress(0);
+    
+    // محاكاة تقدم المزامنة
+    const progressInterval = setInterval(() => {
+      setSyncProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        return prev + 20;
+      });
+    }, 500);
+
     try {
-      // محاكاة المزامنة اليدوية
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      AutoSyncService.getInstance().manualSync();
       
-      const now = new Date().toISOString();
-      setLastSync(now);
-      localStorage.setItem('lastAutoSync', now);
+      setTimeout(() => {
+        const now = new Date().toISOString();
+        setLastSync(now);
+        localStorage.setItem('lastAutoSync', now);
+        
+        clearInterval(progressInterval);
+        setSyncProgress(100);
+        
+        toast.success('تم تحديث الأخبار يدوياً بنجاح');
+      }, 3000);
       
-      window.dispatchEvent(new CustomEvent('articlesUpdated'));
-      
-      toast.success('تم تحديث الأخبار بنجاح');
     } catch (error) {
+      clearInterval(progressInterval);
       toast.error('فشل في تحديث الأخبار');
     } finally {
-      setIsManualSyncing(false);
+      setTimeout(() => {
+        setIsManualSyncing(false);
+        setSyncProgress(0);
+      }, 3500);
     }
   };
 
@@ -70,111 +124,163 @@ const AutoSyncStatus = () => {
     return `منذ ${diffDays} يوم`;
   };
 
+  const getNextSyncTime = () => {
+    if (!config.enabled || !lastSync) return 'غير محدد';
+    
+    const lastSyncDate = new Date(lastSync);
+    const nextSync = new Date(lastSyncDate.getTime() + config.interval * 60 * 1000);
+    const now = new Date();
+    
+    if (nextSync <= now) return 'الآن';
+    
+    const diffMs = nextSync.getTime() - now.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins < 60) {
+      return `بعد ${diffMins} دقيقة`;
+    } else {
+      const hours = Math.floor(diffMins / 60);
+      const mins = diffMins % 60;
+      return `بعد ${hours} ساعة ${mins > 0 ? `و ${mins} دقيقة` : ''}`;
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <RefreshCw className="h-5 w-5" />
-          حالة المزامنة التلقائية
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* حالة المزامنة */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">المزامنة التلقائية</span>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={config.enabled}
-              onCheckedChange={(enabled) => handleConfigChange({ enabled })}
-            />
-            <Badge variant={config.enabled ? "default" : "secondary"}>
-              {config.enabled ? "مفعلة" : "معطلة"}
-            </Badge>
-          </div>
-        </div>
-
-        {/* فترة المزامنة */}
-        {config.enabled && (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="h-5 w-5" />
+            حالة المزامنة التلقائية
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* حالة المزامنة */}
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">فترة التحديث</span>
-            <Select
-              value={config.interval.toString()}
-              onValueChange={(value) => handleConfigChange({ interval: parseInt(value) })}
+            <span className="text-sm font-medium">المزامنة التلقائية</span>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={config.enabled}
+                onCheckedChange={(enabled) => handleConfigChange({ enabled })}
+              />
+              <Badge variant={config.enabled ? "default" : "secondary"}>
+                {config.enabled ? "مفعلة" : "معطلة"}
+              </Badge>
+            </div>
+          </div>
+
+          {/* فترة المزامنة */}
+          {config.enabled && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">فترة التحديث</span>
+              <Select
+                value={config.interval.toString()}
+                onValueChange={(value) => handleConfigChange({ interval: parseInt(value) })}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 دقائق</SelectItem>
+                  <SelectItem value="10">10 دقائق</SelectItem>
+                  <SelectItem value="15">15 دقيقة</SelectItem>
+                  <SelectItem value="30">30 دقيقة</SelectItem>
+                  <SelectItem value="60">ساعة واحدة</SelectItem>
+                  <SelectItem value="120">ساعتان</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* المصادر */}
+          <div className="space-y-2">
+            <span className="text-sm font-medium">المصادر المفعلة:</span>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={config.sources.rss}
+                  onCheckedChange={(rss) => 
+                    handleConfigChange({ sources: { ...config.sources, rss } })
+                  }
+                />
+                RSS Feeds
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <Switch
+                  checked={config.sources.facebook}
+                  onCheckedChange={(facebook) => 
+                    handleConfigChange({ sources: { ...config.sources, facebook } })
+                  }
+                />
+                صفحات فيسبوك
+              </label>
+            </div>
+          </div>
+
+          {/* شريط التقدم أثناء المزامنة */}
+          {isManualSyncing && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>جاري المزامنة...</span>
+                <span>{syncProgress}%</span>
+              </div>
+              <Progress value={syncProgress} className="w-full" />
+            </div>
+          )}
+
+          {/* آخر تحديث */}
+          <div className="flex items-center justify-between pt-2 border-t">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">آخر تحديث: {formatLastSync()}</span>
+              </div>
+              {config.enabled && (
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-blue-600">التحديث التالي: {getNextSyncTime()}</span>
+                </div>
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={handleManualSync}
+              disabled={isManualSyncing}
+              className="flex items-center gap-1"
             >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15 دقيقة</SelectItem>
-                <SelectItem value="30">30 دقيقة</SelectItem>
-                <SelectItem value="60">ساعة واحدة</SelectItem>
-                <SelectItem value="120">ساعتان</SelectItem>
-                <SelectItem value="360">6 ساعات</SelectItem>
-              </SelectContent>
-            </Select>
+              <RefreshCw className={`h-4 w-4 ${isManualSyncing ? 'animate-spin' : ''}`} />
+              {isManualSyncing ? 'جاري التحديث...' : 'تحديث يدوي'}
+            </Button>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        {/* المصادر */}
-        <div className="space-y-2">
-          <span className="text-sm font-medium">المصادر المفعلة:</span>
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={config.sources.rss}
-                onCheckedChange={(rss) => 
-                  handleConfigChange({ sources: { ...config.sources, rss } })
-                }
-              />
-              RSS Feeds
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Switch
-                checked={config.sources.facebook}
-                onCheckedChange={(facebook) => 
-                  handleConfigChange({ sources: { ...config.sources, facebook } })
-                }
-              />
-              صفحات فيسبوك
-            </label>
-          </div>
-        </div>
-
-        {/* آخر تحديث */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-600">آخر تحديث: {formatLastSync()}</span>
-          </div>
-          <Button
-            size="sm"
-            onClick={handleManualSync}
-            disabled={isManualSyncing}
-            className="flex items-center gap-1"
-          >
-            <RefreshCw className={`h-4 w-4 ${isManualSyncing ? 'animate-spin' : ''}`} />
-            {isManualSyncing ? 'جاري التحديث...' : 'تحديث يدوي'}
-          </Button>
-        </div>
-
-        {/* إحصائيات */}
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <div className="text-center p-2 bg-green-50 rounded">
-            <div className="text-lg font-bold text-green-600">
-              {config.sources.rss && config.sources.facebook ? '2' : 
-               config.sources.rss || config.sources.facebook ? '1' : '0'}
+      {/* إحصائيات المقالات */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            إحصائيات المقالات
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{articleStats.total}</div>
+              <div className="text-sm text-blue-600">إجمالي المقالات</div>
             </div>
-            <div className="text-xs text-green-600">مصادر مفعلة</div>
-          </div>
-          <div className="text-center p-2 bg-blue-50 rounded">
-            <div className="text-lg font-bold text-blue-600">
-              {config.enabled ? 'ON' : 'OFF'}
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{articleStats.today}</div>
+              <div className="text-sm text-green-600">اليوم</div>
             </div>
-            <div className="text-xs text-blue-600">حالة النظام</div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-2xl font-bold text-purple-600">{articleStats.thisWeek}</div>
+              <div className="text-sm text-purple-600">هذا الأسبوع</div>
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

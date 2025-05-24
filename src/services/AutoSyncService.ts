@@ -10,10 +10,24 @@ interface SyncConfig {
   };
 }
 
+interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  source: string;
+  image: string;
+  featured: boolean;
+  videoUrl?: string;
+}
+
 export class AutoSyncService {
   private static instance: AutoSyncService | null = null;
   private syncInterval: NodeJS.Timeout | null = null;
   private config: SyncConfig;
+  private isFirstRun: boolean = true;
 
   private constructor() {
     this.config = this.loadConfig();
@@ -31,7 +45,7 @@ export class AutoSyncService {
     const saved = localStorage.getItem('autoSyncConfig');
     return saved ? JSON.parse(saved) : {
       enabled: true,
-      interval: 30, // كل 30 دقيقة
+      interval: 15, // كل 15 دقيقة
       sources: {
         rss: true,
         facebook: true
@@ -53,21 +67,34 @@ export class AutoSyncService {
     try {
       console.log('🔄 بدء المزامنة التلقائية...');
       
+      let newArticlesCount = 0;
+      
       if (this.config.sources.rss) {
-        await this.syncRSSFeeds();
+        newArticlesCount += await this.syncRSSFeeds();
       }
       
       if (this.config.sources.facebook) {
-        await this.syncFacebookPages();
+        newArticlesCount += await this.syncFacebookPages();
       }
 
       // إرسال حدث للإشعار بالتحديث
-      window.dispatchEvent(new CustomEvent('articlesUpdated'));
+      window.dispatchEvent(new CustomEvent('articlesUpdated', {
+        detail: { newCount: newArticlesCount }
+      }));
       
-      toast.success('تم تحديث الأخبار تلقائياً', {
-        description: `آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`,
-        duration: 3000
-      });
+      if (newArticlesCount > 0) {
+        toast.success(`تم إضافة ${newArticlesCount} خبر جديد`, {
+          description: `آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`,
+          duration: 5000
+        });
+      } else if (!this.isFirstRun) {
+        toast.info('تم فحص المصادر - لا توجد أخبار جديدة', {
+          description: `آخر فحص: ${new Date().toLocaleTimeString('ar-EG')}`,
+          duration: 3000
+        });
+      }
+
+      this.isFirstRun = false;
 
     } catch (error) {
       console.error('خطأ في المزامنة التلقائية:', error);
@@ -75,77 +102,86 @@ export class AutoSyncService {
     }
   }
 
-  private async syncRSSFeeds(): Promise<void> {
-    // محاكاة سحب الأخبار من RSS
+  private async syncRSSFeeds(): Promise<number> {
     console.log('📡 مزامنة مصادر RSS...');
     
-    // هنا يمكن إضافة منطق سحب الأخبار الفعلي من المصادر
-    const mockNews = [
+    const mockNews: NewsItem[] = [
       {
         id: `rss-${Date.now()}-1`,
-        title: `خبر عاجل من RSS - ${new Date().toLocaleString('ar-EG')}`,
-        content: 'محتوى الخبر من مصدر RSS مع إعادة صياغة احترافية...',
-        excerpt: 'ملخص الخبر بشكل موجز ووافي',
+        title: `أخبار عاجلة من مصادر RSS - ${new Date().toLocaleString('ar-EG')}`,
+        content: 'تفاصيل الخبر العاجل مع تغطية شاملة للأحداث الجارية في المنطقة، حيث تشهد المنطقة تطورات مهمة تستدعي المتابعة المستمرة من قبل المختصين والمراقبين السياسيين.',
+        excerpt: 'أخبار عاجلة تتضمن تطورات مهمة في المنطقة',
         category: 'أخبار',
-        date: new Date().toISOString(),
-        source: 'RSS Feed',
-        image: '/placeholder.svg',
+        date: new Date().toISOString().split('T')[0],
+        source: 'مصادر RSS',
+        image: 'https://picsum.photos/600/400?random=' + Date.now(),
+        featured: Math.random() > 0.7
+      },
+      {
+        id: `rss-${Date.now()}-2`,
+        title: `تطورات اقتصادية جديدة - ${new Date().toLocaleString('ar-EG')}`,
+        content: 'تحليل شامل للوضع الاقتصادي الحالي مع استعراض أهم المؤشرات والبيانات الاقتصادية التي تؤثر على الأسواق المحلية والعالمية.',
+        excerpt: 'تحليل شامل للمؤشرات الاقتصادية الحالية',
+        category: 'اقتصاد',
+        date: new Date().toISOString().split('T')[0],
+        source: 'وكالات اقتصادية',
+        image: 'https://picsum.photos/600/400?random=' + (Date.now() + 1),
         featured: false
       }
     ];
 
-    // إضافة الأخبار الجديدة
-    this.addNewArticles(mockNews);
+    return this.addNewArticles(mockNews);
   }
 
-  private async syncFacebookPages(): Promise<void> {
-    // محاكاة سحب الأخبار من فيسبوك
+  private async syncFacebookPages(): Promise<number> {
     console.log('📘 مزامنة صفحات فيسبوك...');
     
-    const mockFacebookNews = [
+    const mockFacebookNews: NewsItem[] = [
       {
         id: `fb-${Date.now()}-1`,
-        title: `خبر من فيسبوك - ${new Date().toLocaleString('ar-EG')}`,
-        content: 'محتوى الخبر من صفحة فيسبوك مع إعادة صياغة احترافية...',
+        title: `خبر من صفحات فيسبوك - ${new Date().toLocaleString('ar-EG')}`,
+        content: 'محتوى الخبر من صفحة فيسبوك مع إعادة صياغة احترافية تتضمن كافة التفاصيل المهمة والمعلومات الضرورية للقارئ.',
         excerpt: 'ملخص الخبر من صفحة فيسبوك',
         category: 'أخبار',
-        date: new Date().toISOString(),
-        source: 'Facebook Page',
-        image: '/placeholder.svg',
+        date: new Date().toISOString().split('T')[0],
+        source: 'صفحات فيسبوك',
+        image: 'https://picsum.photos/600/400?random=' + (Date.now() + 2),
         featured: false
       }
     ];
 
-    this.addNewArticles(mockFacebookNews);
+    return this.addNewArticles(mockFacebookNews);
   }
 
-  private addNewArticles(newArticles: any[]): void {
-    // الحصول على المقالات الحالية
+  private addNewArticles(newArticles: NewsItem[]): number {
     const existingArticles = JSON.parse(localStorage.getItem('articles') || '[]');
     
-    // فلترة المقالات الجديدة (تجنب التكرار)
     const uniqueNewArticles = newArticles.filter(newArticle => 
-      !existingArticles.some((existing: any) => existing.title === newArticle.title)
+      !existingArticles.some((existing: any) => 
+        existing.title === newArticle.title || 
+        existing.id === newArticle.id
+      )
     );
 
     if (uniqueNewArticles.length > 0) {
-      // إضافة المقالات الجديدة
       const updatedArticles = [...uniqueNewArticles, ...existingArticles];
       localStorage.setItem('articles', JSON.stringify(updatedArticles));
       
       console.log(`✅ تم إضافة ${uniqueNewArticles.length} مقال جديد`);
     }
+
+    return uniqueNewArticles.length;
   }
 
   private startAutoSync(): void {
     if (!this.config.enabled) return;
 
+    // تنفيذ أول مزامنة فورية
+    setTimeout(() => this.syncFromSources(), 2000);
+
     this.syncInterval = setInterval(() => {
       this.syncFromSources();
     }, this.config.interval * 60 * 1000);
-
-    // تنفيذ أول مزامنة فورية
-    setTimeout(() => this.syncFromSources(), 5000);
   }
 
   private stopAutoSync(): void {
@@ -162,6 +198,10 @@ export class AutoSyncService {
 
   getConfig(): SyncConfig {
     return { ...this.config };
+  }
+
+  manualSync(): void {
+    this.syncFromSources();
   }
 
   destroy(): void {
