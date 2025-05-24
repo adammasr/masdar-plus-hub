@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,7 +77,7 @@ const FacebookPageList = ({
         addBatchArticles(filteredArticles);
         
         // Update last synced time
-        setFacebookPages(prev => prev.map(p =>
+        setFacebookPages((prevPages: FacebookPage[]) => prevPages.map(p =>
           p.id === page.id ? { ...p, lastUpdated: new Date().toISOString() } : p
         ));
         
@@ -95,7 +94,7 @@ const FacebookPageList = ({
   };
 
   const togglePageAutoUpdate = (pageId: string) => {
-    setFacebookPages(prev => prev.map(page =>
+    setFacebookPages((prevPages: FacebookPage[]) => prevPages.map(page =>
       page.id === pageId ? { ...page, autoUpdate: !page.autoUpdate } : page
     ));
   };
