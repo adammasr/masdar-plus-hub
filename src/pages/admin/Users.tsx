@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Trash2, Key, Users, Shield } from "lucide-react";
+import { UserPlus, Trash2, Key, Users as UsersIcon, Shield } from "lucide-react";
 import { toast } from "sonner";
 
 type User = {
@@ -186,7 +186,7 @@ const Users = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+            <UsersIcon className="h-5 w-5" />
             قائمة المستخدمين ({users.length})
           </CardTitle>
         </CardHeader>
