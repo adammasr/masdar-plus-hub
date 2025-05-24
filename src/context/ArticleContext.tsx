@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface Article {
@@ -14,11 +13,15 @@ export interface Article {
   source?: string;
   isTranslated?: boolean;
   readingTime?: number;
+  tags?: string[];
+  originalSource?: string;
 }
 
 interface ArticleContextType {
   articles: Article[];
+  featuredArticles: Article[];
   addArticle: (article: Article) => void;
+  addBatchArticles: (articles: Article[]) => void;
   updateArticle: (id: string, article: Partial<Article>) => void;
   deleteArticle: (id: string) => void;
   getArticleById: (id: string) => Article | undefined;
@@ -130,6 +133,12 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('articles', JSON.stringify(newArticles));
   };
 
+  const addBatchArticles = (newArticles: Article[]) => {
+    const combinedArticles = [...newArticles, ...articles];
+    setArticles(combinedArticles);
+    localStorage.setItem('articles', JSON.stringify(combinedArticles));
+  };
+
   const updateArticle = (id: string, updatedArticle: Partial<Article>) => {
     const newArticles = articles.map(article => 
       article.id === id ? { ...article, ...updatedArticle } : article
@@ -160,9 +169,13 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const featuredArticles = articles.filter(article => article.featured);
+
   const value: ArticleContextType = {
     articles,
+    featuredArticles,
     addArticle,
+    addBatchArticles,
     updateArticle,
     deleteArticle,
     getArticleById,
