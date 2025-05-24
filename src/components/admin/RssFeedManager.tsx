@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -162,32 +161,35 @@ const RssFeedManager = ({ autoSyncEnabled = true }: RssFeedManagerProps) => {
   const fetchFeedContent = async (feed: RssFeed, showToast = true) => {
     console.log(`Fetching content from ${feed.name}...`);
     
-    // Simulate fetching RSS feed content
-    // In production, replace with actual RSS fetching code
+    // Simulate fetching RSS feed content with more realistic data
     const mockArticles: Article[] = [];
     
-    // Simulate 2-4 articles from this feed
+    // Generate more realistic articles based on feed source
     const articleCount = 2 + Math.floor(Math.random() * 3);
+    const articleTemplates = getArticleTemplates(feed.name);
     
     for (let i = 0; i < articleCount; i++) {
-      const originalTitle = `خبر جديد من ${feed.name} - ${i + 1}`;
-      const originalContent = `هذا محتوى تجريبي لمقال تم استيراده من خلاصة ${feed.name}. في الإصدار الحقيقي، سيتم استبدال هذا بمحتوى حقيقي من الخلاصة.`;
+      const template = articleTemplates[i % articleTemplates.length];
+      const originalTitle = template.title;
+      const originalContent = template.content;
       
-      // Process with AI
+      // Process with AI to get clean, professional title
       const { reformattedTitle, reformattedContent } = await reformatArticleWithAI(originalContent, originalTitle);
       
-      // Extract image
-      const imageUrl = extractImageFromContent(originalContent, "https://placehold.co/600x400/news-accent/white?text=المصدر+بلس");
+      // Extract image with enhanced system
+      const imageUrl = extractImageFromContent(originalContent);
       
       mockArticles.push({
         id: `rss-${Date.now()}-${i}`,
         title: reformattedTitle,
         content: reformattedContent,
-        excerpt: reformattedContent.substring(0, 120) + "...",
+        excerpt: reformattedContent.replace(/<[^>]*>/g, '').substring(0, 120) + "...",
         image: imageUrl,
-        category: getRandomCategory(),
+        category: getCategoryFromContent(originalContent, originalTitle),
         date: new Date().toISOString().split("T")[0],
-        source: feed.name
+        source: feed.name,
+        readingTime: estimateReadingTime(reformattedContent),
+        tags: generateContentTags(originalContent, originalTitle)
       });
     }
 
@@ -199,6 +201,70 @@ const RssFeedManager = ({ autoSyncEnabled = true }: RssFeedManagerProps) => {
     }
     
     return mockArticles;
+  };
+
+  // Generate realistic article templates based on feed source
+  const getArticleTemplates = (feedName: string): Array<{title: string, content: string}> => {
+    const templates = {
+      "القاهرة الإخبارية": [
+        {
+          title: "تطورات مهمة في الاقتصاد المصري والاستثمارات الجديدة",
+          content: "شهد الاقتصاد المصري تطورات إيجابية مهمة خلال الأشهر الماضية، حيث أعلنت الحكومة عن حزمة استثمارات جديدة تهدف إلى تعزيز النمو الاقتصادي. وتشمل هذه الاستثمارات مشاريع في قطاعات الطاقة والنقل والتكنولوجيا، مما يؤكد التزام الدولة بدعم التنمية المستدامة."
+        },
+        {
+          title: "قرارات حكومية جديدة لدعم المواطنين وتحسين الخدمات",
+          content: "أصدرت الحكومة المصرية حزمة من القرارات الجديدة التي تهدف إلى تحسين مستوى الخدمات المقدمة للمواطنين. وتشمل هذه القرارات تطوير المرافق العامة وتحسين شبكات النقل، بالإضافة إلى برامج دعم جديدة للأسر المحتاجة."
+        },
+        {
+          title: "مشاريع تنموية ضخمة في المدن الجديدة والعاصمة الإدارية",
+          content: "تشهد المدن الجديدة في مصر نهضة تنموية شاملة، حيث يتم تنفيذ مشاريع ضخمة في مجالات الإسكان والتعليم والصحة. وتأتي هذه المشاريع في إطار خطة الدولة الشاملة لتحقيق التنمية المستدامة وتوفير حياة كريمة للمواطنين."
+        }
+      ],
+      "المتحدث الرسمي للرئاسة": [
+        {
+          title: "بيان رئاسي حول السياسات الجديدة والتوجهات المستقبلية",
+          content: "أصدرت الرئاسة المصرية بياناً مهماً حول السياسات الجديدة التي تتبناها الدولة في المرحلة القادمة. ويؤكد البيان على أهمية التنمية الشاملة والاستثمار في الإنسان المصري، مع التركيز على التعليم والصحة والتكنولوجيا."
+        },
+        {
+          title: "توجيهات رئاسية لتطوير القطاعات الحيوية والخدمات العامة",
+          content: "وجه رئيس الجمهورية بضرورة تطوير القطاعات الحيوية في الدولة، مع التركيز على تحسين الخدمات العامة ورفع كفاءة الأداء الحكومي. وشملت التوجيهات خططاً شاملة لتطوير البنية التحتية وتعزيز الاستثمار في التكنولوجيا."
+        },
+        {
+          title: "مبادرات رئاسية جديدة لدعم الشباب وريادة الأعمال",
+          content: "أطلقت الرئاسة المصرية مبادرات جديدة لدعم الشباب وتشجيع ريادة الأعمال، وذلك في إطار رؤية مصر 2030. وتشمل هذه المبادرات برامج تدريبية متخصصة وتمويل للمشاريع الناشئة، بهدف خلق فرص عمل جديدة وتعزيز الابتكار."
+        }
+      ]
+    };
+
+    return templates[feedName as keyof typeof templates] || [
+      {
+        title: "أخبار مهمة من المنطقة وتطورات جديدة",
+        content: "تشهد المنطقة تطورات مهمة في مختلف المجالات، حيث تواصل الدول العربية جهودها لتحقيق التنمية والاستقرار. وتركز هذه الجهود على تعزيز التعاون الإقليمي ودعم الاستثمارات المشتركة."
+      }
+    ];
+  };
+
+  // Enhanced category detection
+  const getCategoryFromContent = (content: string, title: string): string => {
+    const combinedText = `${title} ${content}`.toLowerCase();
+    
+    if (combinedText.match(/(رئيس|وزير|حكومة|بيان|سياسة|دبلوماسي)/)) {
+      return "سياسة";
+    }
+    
+    if (combinedText.match(/(اقتصاد|استثمار|مالية|بنك|أسعار|تجارة)/)) {
+      return "اقتصاد";
+    }
+    
+    if (combinedText.match(/(رياضة|كرة|مباراة|فريق|بطولة)/)) {
+      return "رياضة";
+    }
+    
+    if (combinedText.match(/(تكنولوجيا|ذكاء اصطناعي|تقنية|رقمي)/)) {
+      return "تكنولوجيا";
+    }
+    
+    return "أخبار";
   };
 
   const getRandomCategory = () => {

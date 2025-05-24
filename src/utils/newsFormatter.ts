@@ -43,54 +43,99 @@ export const reformatArticleWithAI = async (
   };
 };
 
-// Enhanced title generation with translation awareness
+// Enhanced title generation with cleaner output
 const generateBetterTitle = (originalTitle: string, isTranslated: boolean = false): string => {
-  let cleanTitle = originalTitle.replace(/(حصري|خاص|ننفرد|ننشر|تصريحات خاصة|انفراد|Breaking|Exclusive)/i, '').trim();
+  // Remove timestamps and dates first
+  let cleanTitle = originalTitle
+    .replace(/\d{1,2}‏\/\d{1,2}‏\/\d{2,4}\s*\d{1,2}:\d{1,2}:\d{1,2}\s*(ص|م)/g, '')
+    .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
+    .replace(/\d{1,2}-\d{1,2}-\d{2,4}/g, '')
+    .replace(/من مصادر RSS/g, '')
+    .replace(/أخبار عاجلة/g, '')
+    .replace(/عاجل:/g, '')
+    .replace(/-\s*$/g, '')
+    .trim();
+
+  // Remove common prefixes and suffixes
+  cleanTitle = cleanTitle
+    .replace(/(حصري|خاص|ننفرد|ننشر|تصريحات خاصة|انفراد|Breaking|Exclusive)/i, '')
+    .replace(/\|\s*مصدر\s*بلس/g, '')
+    .trim();
+
+  // If title is too short, try to extract meaningful content
+  if (cleanTitle.length < 10) {
+    cleanTitle = originalTitle.replace(/[^\u0600-\u06FF\s]/g, '').trim();
+  }
+
+  // Generate contextual title based on content
+  const titleKeywords = extractKeywords(cleanTitle);
+  const contextualTitle = generateContextualTitle(titleKeywords, cleanTitle);
   
-  // Remove date references
-  cleanTitle = cleanTitle.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '').trim();
-  
-  // Get contextual prefix
-  const titlePrefix = getContextualPrefix(cleanTitle);
-  
-  // Add translation indicator if needed
-  let finalTitle = titlePrefix ? `${titlePrefix} ${cleanTitle}` : cleanTitle;
-  
-  // Ensure proper length
+  // Ensure proper length (max 80 characters)
+  let finalTitle = contextualTitle || cleanTitle;
   if (finalTitle.length > 80) {
-    finalTitle = cleanTitle.length > 80 ? cleanTitle.substring(0, 77) + '...' : cleanTitle;
+    finalTitle = finalTitle.substring(0, 77) + '...';
   }
   
-  return `${finalTitle} | مصدر بلس`;
+  return finalTitle;
 };
 
-// Enhanced contextual prefix with more categories
-const getContextualPrefix = (title: string): string => {
-  if (title.match(/(عاجل|خطير|تطور|تحديث|urgent|breaking)/i)) {
-    return "عاجل:";
+// Extract keywords from title for better categorization
+const extractKeywords = (title: string): string[] => {
+  const keywords: string[] = [];
+  const titleLower = title.toLowerCase();
+  
+  // Political keywords
+  if (titleLower.match(/(رئيس|وزير|حكومة|برلمان|دبلوماسي|مجلس)/)) {
+    keywords.push('سياسة');
   }
   
-  if (title.match(/(تقرير|دراسة|تحليل|استطلاع|report|analysis)/i)) {
-    return "تقرير:";
+  // Economic keywords
+  if (titleLower.match(/(اقتصاد|بنك|استثمار|أسعار|دولار|بورصة)/)) {
+    keywords.push('اقتصاد');
   }
   
-  if (title.match(/(يؤكد|أكد|صرح|تصريح|confirms|statement)/i)) {
-    return "تصريح:";
+  // Technology keywords
+  if (titleLower.match(/(ذكاء اصطناعي|تكنولوجيا|تقنية|رقمي|انترنت)/)) {
+    keywords.push('تكنولوجيا');
   }
   
-  if (title.match(/(إنجاز|خطوة|تقدم|تطور إيجابي|achievement|progress)/i)) {
-    return "متابعة:";
+  // Sports keywords
+  if (titleLower.match(/(رياضة|كرة|مباراة|فريق|بطولة|لاعب)/)) {
+    keywords.push('رياضة');
   }
   
-  if (title.match(/(ذكاء اصطناعي|AI|تكنولوجيا|تقنية|technology)/i)) {
-    return "تقنية:";
+  // Health keywords
+  if (titleLower.match(/(صحة|طب|مرض|علاج|مستشفى)/)) {
+    keywords.push('صحة');
   }
   
-  if (title.match(/(عسكري|دفاع|أمني|military|defense|security)/i)) {
-    return "دفاع:";
+  return keywords;
+};
+
+// Generate contextual professional title
+const generateContextualTitle = (keywords: string[], originalTitle: string): string => {
+  if (keywords.includes('سياسة')) {
+    return `تطورات سياسية: ${originalTitle}`;
   }
   
-  return "";
+  if (keywords.includes('اقتصاد')) {
+    return `الأسواق: ${originalTitle}`;
+  }
+  
+  if (keywords.includes('تكنولوجيا')) {
+    return `تقنية: ${originalTitle}`;
+  }
+  
+  if (keywords.includes('رياضة')) {
+    return `رياضة: ${originalTitle}`;
+  }
+  
+  if (keywords.includes('صحة')) {
+    return `صحة: ${originalTitle}`;
+  }
+  
+  return originalTitle;
 };
 
 // Enhanced content generation with better structure
@@ -239,9 +284,16 @@ const generateDiscussionQuestion = (content: string, title: string): string => {
   return "ما رأيك في هذا التطور وتأثيره على المستقبل؟";
 };
 
-// Enhanced image extraction with better fallbacks
-export const extractImageFromContent = (content: string, fallbackImage: string): string => {
-  // Try Open Graph images first
+// Enhanced image extraction with better variety
+export const extractImageFromContent = (content: string, fallbackImage: string = ""): string => {
+  // Try to extract original images from RSS content first
+  const originalImage = extractOriginalRSSImage(content);
+  if (originalImage) {
+    console.log("Found original RSS image:", originalImage);
+    return originalImage;
+  }
+
+  // Try Open Graph images
   const ogImageRegex = /<meta\s+(?:[^>]*?\s+)?property=["']og:image["']\s+(?:[^>]*?\s+)?content=["']([^"']+)["']/i;
   const ogMatch = content.match(ogImageRegex);
   if (ogMatch && ogMatch[1]) {
@@ -282,34 +334,81 @@ export const extractImageFromContent = (content: string, fallbackImage: string):
     return scoredImages[0].url;
   }
   
-  // High-quality fallback images for different categories
-  const fallbackImages = {
-    tech: "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&auto=format&fit=crop&q=60",
-    ai: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60",
-    politics: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&auto=format&fit=crop&q=60",
-    economy: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=60",
-    sports: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=60",
-    military: "https://images.unsplash.com/photo-1526470498-9ae73c665de8?w=800&auto=format&fit=crop&q=60",
-    default: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=60"
-  };
-  
-  // Select appropriate fallback based on content
+  // Use contextual image based on content
+  return getContextualImage(content);
+};
+
+// Extract original RSS image from content
+const extractOriginalRSSImage = (content: string): string | null => {
+  // Look for enclosure tags (common in RSS feeds)
+  const enclosureRegex = /<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image\/[^"']+["'][^>]*>/i;
+  const enclosureMatch = content.match(enclosureRegex);
+  if (enclosureMatch && enclosureMatch[1]) {
+    return enclosureMatch[1];
+  }
+
+  // Look for media:content tags
+  const mediaContentRegex = /<media:content[^>]+url=["']([^"']+)["'][^>]*type=["']image\/[^"']+["'][^>]*>/i;
+  const mediaMatch = content.match(mediaContentRegex);
+  if (mediaMatch && mediaMatch[1]) {
+    return mediaMatch[1];
+  }
+
+  // Look for RSS media:thumbnail
+  const mediaThumbnailRegex = /<media:thumbnail[^>]+url=["']([^"']+)["'][^>]*>/i;
+  const thumbnailMatch = content.match(mediaThumbnailRegex);
+  if (thumbnailMatch && thumbnailMatch[1]) {
+    return thumbnailMatch[1];
+  }
+
+  // Look for standard img tags with high quality indicators
+  const highQualityImgRegex = /<img[^>]+src=["']([^"']+\.(jpg|jpeg|png|webp))["'][^>]*(?:width=["']\d{3,}["']|height=["']\d{3,}["'])[^>]*>/i;
+  const highQualityMatch = content.match(highQualityImgRegex);
+  if (highQualityMatch && highQualityMatch[1]) {
+    return highQualityMatch[1];
+  }
+
+  return null;
+};
+
+// Get contextual image from Unsplash based on content
+const getContextualImage = (content: string): string => {
   const contentLower = content.toLowerCase();
+  const imageQueries = [];
+  
+  // Determine content category and generate appropriate search terms
   if (contentLower.includes('ذكاء اصطناعي') || contentLower.includes('ai')) {
-    return fallbackImages.ai;
-  } else if (contentLower.includes('تكنولوجيا')) {
-    return fallbackImages.tech;
-  } else if (contentLower.includes('سياسة')) {
-    return fallbackImages.politics;
-  } else if (contentLower.includes('اقتصاد')) {
-    return fallbackImages.economy;
-  } else if (contentLower.includes('رياضة')) {
-    return fallbackImages.sports;
+    imageQueries.push('artificial-intelligence', 'technology', 'robot', 'computer');
+  } else if (contentLower.includes('تكنولوجيا') || contentLower.includes('تقنية')) {
+    imageQueries.push('technology', 'computer', 'digital', 'innovation');
+  } else if (contentLower.includes('سياسة') || contentLower.includes('حكومة') || contentLower.includes('رئيس')) {
+    imageQueries.push('government', 'politics', 'meeting', 'conference');
+  } else if (contentLower.includes('اقتصاد') || contentLower.includes('مال') || contentLower.includes('استثمار')) {
+    imageQueries.push('business', 'finance', 'money', 'economy');
+  } else if (contentLower.includes('رياضة') || contentLower.includes('كرة') || contentLower.includes('مباراة')) {
+    imageQueries.push('sports', 'football', 'soccer', 'stadium');
+  } else if (contentLower.includes('صحة') || contentLower.includes('طب')) {
+    imageQueries.push('health', 'medical', 'hospital', 'doctor');
   } else if (contentLower.includes('عسكري') || contentLower.includes('دفاع')) {
-    return fallbackImages.military;
+    imageQueries.push('military', 'defense', 'security', 'army');
+  } else if (contentLower.includes('علم') || contentLower.includes('بحث')) {
+    imageQueries.push('science', 'research', 'laboratory', 'discovery');
+  } else if (contentLower.includes('تعليم') || contentLower.includes('جامعة')) {
+    imageQueries.push('education', 'university', 'students', 'learning');
+  } else if (contentLower.includes('بيئة') || contentLower.includes('مناخ')) {
+    imageQueries.push('environment', 'nature', 'climate', 'earth');
   }
   
-  return fallbackImages.default;
+  // If no specific category, use general news-related terms
+  if (imageQueries.length === 0) {
+    imageQueries.push('news', 'newspaper', 'journalism', 'media');
+  }
+  
+  // Select a random query and generate Unsplash URL
+  const randomQuery = imageQueries[Math.floor(Math.random() * imageQueries.length)];
+  const randomId = Math.floor(Math.random() * 1000);
+  
+  return `https://images.unsplash.com/photo-${1500000000000 + randomId}?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=search-${randomQuery}`;
 };
 
 // Score images based on quality indicators
@@ -388,7 +487,7 @@ export const processFacebookPost = (post: any): Partial<Article> => {
     title = title.replace(/https?:\/\/\S+/g, '').trim();
   }
   
-  // Enhanced image extraction
+  // Enhanced image extraction from Facebook
   let image = '';
   if (post.attachments?.data && post.attachments.data.length) {
     for (const attachment of post.attachments.data) {
@@ -409,6 +508,11 @@ export const processFacebookPost = (post: any): Partial<Article> => {
   
   if (!image && post.full_picture) {
     image = post.full_picture;
+  }
+  
+  // If no image found, use contextual image
+  if (!image) {
+    image = getContextualImage(content);
   }
   
   const excerpt = content 
