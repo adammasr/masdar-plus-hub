@@ -1,6 +1,8 @@
+
 import { useArticles } from "../../context/ArticleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import WebhookSetup from "../../components/admin/WebhookSetup";
+import FacebookSection from "../../components/admin/facebook/FacebookSection";
 
 const Dashboard = () => {
   const { articles } = useArticles();
@@ -65,6 +67,9 @@ const Dashboard = () => {
       
       <h2 className="text-2xl font-bold mt-8">استيراد المقالات</h2>
       <WebhookSetup />
+      
+      {/* إضافة قسم صفحات فيسبوك */}
+      <FacebookSection />
 
       <h2 className="text-2xl font-bold mt-8">آخر المقالات المضافة</h2>
       <div className="bg-white rounded-lg shadow">

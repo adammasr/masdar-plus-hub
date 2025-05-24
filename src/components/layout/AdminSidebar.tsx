@@ -13,7 +13,8 @@ import {
   BadgeDollarSign
 } from "lucide-react";
 
-const LOGO_SRC = "/logo.png";
+// استخدام نفس اللوجو المحدث
+const LOGO_SRC = "/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png";
 
 const AdminSidebar = () => {
   const location = useLocation();
@@ -54,12 +55,14 @@ const AdminSidebar = () => {
     <aside
       className="
         bg-gradient-to-bl from-white via-[#f6f6fb] to-[#f3f4fa]
-        border-l border-news-accent/10 w-64 fixed top-0 right-0 h-full
-        mt-20 md:mt-24 z-40 shadow-xl shadow-news-accent/5
+        border-l border-news-accent/10 w-64 fixed top-0 left-0 h-full
+        z-40 shadow-xl shadow-news-accent/5
         hidden md:flex flex-col
+        overflow-y-auto
       "
       style={{
         backdropFilter: "blur(1.5px)",
+        marginTop: "140px", // تعديل المسافة العلوية لتجنب التداخل مع الهيدر
       }}
     >
       {/* اللوجو والعنوان */}
@@ -68,6 +71,10 @@ const AdminSidebar = () => {
           src={LOGO_SRC}
           alt="ALMASDAR PLUS Logo"
           className="w-10 h-10 rounded-lg shadow border-2 border-white bg-white object-contain"
+          onError={(e) => {
+            console.log('Admin sidebar logo failed to load');
+            e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23db1f2d'/%3E%3Ctext x='20' y='25' text-anchor='middle' fill='white' font-size='8' font-weight='bold'%3E%D8%A7%D9%84%D9%85%D8%B5%D8%AF%D8%B1%3C/text%3E%3C/svg%3E";
+          }}
         />
         <span className="font-black text-lg text-news-accent tracking-wide drop-shadow-sm select-none">
           المصدر بلس
@@ -127,6 +134,9 @@ const AdminSidebar = () => {
           alt="ALMASDAR PLUS Logo Decorative"
           className="w-28 h-16 object-contain"
           style={{ filter: "blur(0.5px)" }}
+          onError={(e) => {
+            e.currentTarget.style.display = 'none';
+          }}
         />
       </div>
     </aside>

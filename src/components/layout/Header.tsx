@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
 
-// مسار اللوجو المحدث
+// استخدام اللوجو الصحيح المرفوع
 const LOGO_SRC = "/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png";
 
 const Header = () => {
@@ -48,7 +49,7 @@ const Header = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {/* رابط لوحة التحكم (يمكنك إخفاؤه بناءً على صلاحية الأدمن لاحقًا) */}
+            {/* رابط لوحة التحكم */}
             <Link
               to="/admin"
               className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
@@ -56,7 +57,7 @@ const Header = () => {
               <LayoutDashboard size={16} className="ml-0.5 inline" />
               لوحة التحكم
             </Link>
-            {/* رابط دخول (استبدله حسب نظام المصادقة لديك) */}
+            {/* رابط دخول */}
             <Link
               to="/admin/login"
               className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
@@ -79,19 +80,11 @@ const Header = () => {
                 className="h-14 w-14 md:h-20 md:w-20 rounded-xl shadow-lg shadow-news-accent/10 bg-white object-contain border-2 border-white transition group-hover:scale-105"
                 style={{ filter: "drop-shadow(0 0 8px #db1f2d22)" }}
                 onError={(e) => {
-                  console.log('Logo failed to load, falling back to text');
-                  e.currentTarget.style.display = 'none';
+                  console.log('Logo failed to load');
+                  // إضافة fallback للوجو
+                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23db1f2d'/%3E%3Ctext x='40' y='45' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3E%D8%A7%D9%84%D9%85%D8%B5%D8%AF%D8%B1%3C/text%3E%3C/svg%3E";
                 }}
               />
-              {/* زخرفة خلفية شفافة للوجو */}
-              <span className="absolute top-6 left-1/2 -translate-x-1/2 opacity-10 blur-md z-0 pointer-events-none hidden md:block">
-                <img
-                  src={LOGO_SRC}
-                  alt=""
-                  className="w-40 h-16 object-contain"
-                  draggable={false}
-                />
-              </span>
             </div>
             <span className="font-black text-2xl md:text-4xl tracking-wider text-news-accent drop-shadow-lg select-none">
               المصدر بلس
