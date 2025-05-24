@@ -77,9 +77,10 @@ const FacebookPageList = ({
         addBatchArticles(filteredArticles);
         
         // Update last synced time
-        setFacebookPages((prevPages: FacebookPage[]) => prevPages.map(p =>
+        const updatedPages = facebookPages.map(p =>
           p.id === page.id ? { ...p, lastUpdated: new Date().toISOString() } : p
-        ));
+        );
+        setFacebookPages(updatedPages);
         
         toast.success(`تم مزامنة ${filteredArticles.length} منشورات من ${page.name} وإضافتها للموقع`);
       } else {
@@ -94,9 +95,10 @@ const FacebookPageList = ({
   };
 
   const togglePageAutoUpdate = (pageId: string) => {
-    setFacebookPages((prevPages: FacebookPage[]) => prevPages.map(page =>
+    const updatedPages = facebookPages.map(page =>
       page.id === pageId ? { ...page, autoUpdate: !page.autoUpdate } : page
-    ));
+    );
+    setFacebookPages(updatedPages);
   };
 
   const formatDateTime = (dateString: string) => {
