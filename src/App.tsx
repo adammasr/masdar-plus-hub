@@ -13,6 +13,8 @@ import ArticleDetail from "./pages/ArticleDetail";
 import { ArticleProvider } from "./context/ArticleContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import { AutoSyncService } from "./services/AutoSyncService";
+import { useEffect } from "react";
 
 // Admin routes
 import Dashboard from "./pages/admin/Dashboard";
@@ -28,6 +30,16 @@ import "./App.css";
 import { Toaster } from "sonner";
 
 function App() {
+  useEffect(() => {
+    // تهيئة خدمة المزامنة التلقائية
+    const autoSync = AutoSyncService.getInstance();
+    
+    return () => {
+      // تنظيف الخدمة عند إغلاق التطبيق
+      autoSync.destroy();
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <ArticleProvider>

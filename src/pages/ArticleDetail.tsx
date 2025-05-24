@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useArticles } from "../context/ArticleContext";
@@ -23,17 +22,19 @@ import { estimateReadingTime } from "../utils/newsFormatter";
 const LOGO_SRC = "/logo.png";
 
 const ArticleDetail = () => {
-  const { articleId } = useParams<{ articleId: string }>();
+  const { articleId, id } = useParams<{ articleId?: string; id?: string }>();
   const { articles } = useArticles();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   
-  const article = articles.find(a => a.id === articleId);
+  // استخدام articleId أو id حسب المسار
+  const currentId = articleId || id;
+  const article = articles.find(a => a.id === currentId);
   
   // الحصول على مقالات ذات صلة بناءً على الوسوم والفئة
   const relatedArticles = articles
     .filter(a => {
-      if (a.id === articleId) return false;
+      if (a.id === currentId) return false;
       
       // أولوية للمقالات التي تحتوي على نفس الوسوم
       if (article?.tags && a.tags) {
@@ -88,10 +89,10 @@ const ArticleDetail = () => {
   };
   
   useEffect(() => {
-    if (articleId) {
+    if (currentId) {
       setLoading(false);
     }
-  }, [articleId]);
+  }, [currentId]);
   
   useEffect(() => {
     if (!loading && !article) {

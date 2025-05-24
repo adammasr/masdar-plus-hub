@@ -3,6 +3,7 @@ import { useArticles } from "../../context/ArticleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import WebhookSetup from "../../components/admin/WebhookSetup";
 import FacebookSection from "../../components/admin/facebook/FacebookSection";
+import AutoSyncStatus from "../../components/admin/AutoSyncStatus";
 
 const Dashboard = () => {
   const { articles } = useArticles();
@@ -64,6 +65,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+      
+      {/* إضافة مكون حالة المزامنة التلقائية */}
+      <AutoSyncStatus />
       
       <h2 className="text-2xl font-bold mt-8">استيراد المقالات</h2>
       <WebhookSetup />
