@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface Article {
@@ -30,72 +31,22 @@ interface ArticleContextType {
 
 const ArticleContext = createContext<ArticleContextType | undefined>(undefined);
 
-const initialArticles: Article[] = [
-  {
-    id: "1",
-    title: "أخبار عاجلة من المنطقة",
-    content: "تفاصيل شاملة للأحداث الجارية في المنطقة مع تغطية مباشرة للتطورات الأخيرة. يشهد الوضع تطورات مهمة تستدعي المتابعة الدقيقة من قبل المراقبين والمحللين السياسيين في المنطقة.",
-    excerpt: "تغطية شاملة للأحداث الجارية والتطورات الأخيرة",
-    image: "https://picsum.photos/600/400?random=1",
-    category: "أخبار",
-    date: new Date().toISOString().split('T')[0],
-    featured: true,
-    source: "وكالات الأنباء",
-    readingTime: 3
-  },
-  {
-    id: "2",
-    title: "تطورات اقتصادية مهمة",
-    content: "تحليل مفصل للوضع الاقتصادي الراهن مع استعراض أهم المؤشرات والبيانات الاقتصادية التي تؤثر على الأسواق المحلية والعالمية. يركز التقرير على التحديات والفرص المتاحة.",
-    excerpt: "تحليل شامل للمؤشرات الاقتصادية والتوقعات المستقبلية",
-    image: "https://picsum.photos/600/400?random=2",
-    category: "اقتصاد",
-    date: new Date().toISOString().split('T')[0],
-    featured: false,
-    source: "محللون اقتصاديون",
-    readingTime: 5
-  },
-  {
-    id: "3",
-    title: "فيديو: لقاء حصري مع خبير سياسي",
-    content: "مقابلة شاملة مع خبير في الشؤون السياسية يناقش فيها أهم التطورات السياسية الإقليمية والدولية وتأثيرها على المنطقة. اللقاء يتضمن تحليلات عميقة ورؤى استراتيجية.",
-    excerpt: "لقاء حصري يناقش التطورات السياسية الإقليمية",
-    image: "https://picsum.photos/600/400?random=3",
-    category: "فيديوهات",
-    date: new Date().toISOString().split('T')[0],
-    featured: true,
-    videoUrl: "https://www.youtube.com/watch?v=example",
-    source: "قناة الأخبار",
-    readingTime: 7
-  }
-];
+// قائمة فارغة من المقالات
+const initialArticles: Article[] = [];
 
 export const ArticleProvider = ({ children }: { children: ReactNode }) => {
   const [articles, setArticles] = useState<Article[]>([]);
 
   // تحميل المقالات من localStorage عند بدء التطبيق
   useEffect(() => {
-    const savedArticles = localStorage.getItem('articles');
-    if (savedArticles) {
-      try {
-        const parsedArticles = JSON.parse(savedArticles);
-        setArticles(parsedArticles);
-      } catch (error) {
-        console.error('خطأ في تحميل المقالات:', error);
-        setArticles(initialArticles);
-        localStorage.setItem('articles', JSON.stringify(initialArticles));
-      }
-    } else {
-      setArticles(initialArticles);
-      localStorage.setItem('articles', JSON.stringify(initialArticles));
-    }
+    // مسح جميع المقالات المحفوظة وإعادة تعيين قائمة فارغة
+    setArticles(initialArticles);
+    localStorage.setItem('articles', JSON.stringify(initialArticles));
   }, []);
 
   // حفظ المقالات في localStorage عند كل تغيير
   useEffect(() => {
-    if (articles.length > 0) {
-      localStorage.setItem('articles', JSON.stringify(articles));
-    }
+    localStorage.setItem('articles', JSON.stringify(articles));
   }, [articles]);
 
   // الاستماع لأحداث التحديث الخارجية
