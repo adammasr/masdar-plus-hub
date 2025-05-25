@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
@@ -20,13 +19,16 @@ const Home = () => {
   const { articles } = useArticles();
   const [search, setSearch] = useState("");
 
-  // شريط الأخبار العاجلة
+  // أحدث الأخبار العاجلة (الأخبار التي تم نشرها في آخر 6 ساعات)
   const breakingNews = useMemo(
-    () =>
-      articles
-        .filter((a) => new Date(a.date) >= startSyncDate)
+    () => {
+      const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+      return articles
+        .filter((a) => new Date(a.date) >= startSyncDate && new Date(a.date) >= sixHoursAgo)
+        .filter((a) => a.category === "أخبار" || a.category === "سياسة")
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 3),
+        .slice(0, 5); // أحدث 5 أخبار عاجلة
+    },
     [articles]
   );
 
@@ -89,8 +91,8 @@ const Home = () => {
       {/* Navigation */}
       <Navigation />
 
-      {/* Breaking News */}
-      <BreakingNews breakingNews={breakingNews} />
+      {/* Breaking News - Only show if there are recent breaking news */}
+      {breakingNews.length > 0 && <BreakingNews breakingNews={breakingNews} />}
 
       {/* Search Bar */}
       <SearchBar search={search} setSearch={setSearch} />
