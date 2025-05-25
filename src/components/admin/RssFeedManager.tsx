@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Article, useArticles } from "../../context/ArticleContext";
 import { Trash2, RefreshCw, Clock, AlarmClock } from "lucide-react";
-import { reformatArticleWithAI, extractImageFromContent, updateArticleDate } from "../../utils/newsFormatter";
+import { reformatArticleWithAI, extractImageFromContent, updateArticleDate, estimateReadingTime, generateContentTags } from "../../utils/newsFormatter";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
