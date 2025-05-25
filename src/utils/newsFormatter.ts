@@ -205,7 +205,7 @@ const generateConclusion = (content: string, isTranslated: boolean): string => {
 };
 
 // Enhanced tag generation with more categories
-const generateContentTags = (content: string, title: string): string[] => {
+export const generateContentTags = (content: string, title: string): string[] => {
   const combinedText = `${title} ${content}`.toLowerCase();
   const tags: string[] = [];
   
