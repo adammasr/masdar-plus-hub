@@ -1,0 +1,303 @@
+/* تحسين تجربة المستخدم والتصميم البصري للموقع */
+
+/* ألوان الموقع الرئيسية */
+:root {
+  --news-primary: #e63946;
+  --news-primary-hover: #d62b38;
+  --news-secondary: #1d3557;
+  --news-accent: #e63946;
+  --news-accent-hover: #d62b38;
+  --news-background: #f8f9fa;
+  --news-card-bg: #ffffff;
+  --news-text: #333333;
+  --news-text-light: #6c757d;
+  --news-border: #e9ecef;
+  --news-shadow: rgba(0, 0, 0, 0.05);
+  --news-shadow-hover: rgba(0, 0, 0, 0.1);
+}
+
+/* تحسين الخطوط والقراءة */
+body {
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  background-color: var(--news-background);
+  color: var(--news-text);
+  line-height: 1.6;
+}
+
+/* تحسين بطاقات الأخبار */
+.news-card {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid var(--news-border);
+  background-color: var(--news-card-bg);
+  box-shadow: 0 4px 6px var(--news-shadow);
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px var(--news-shadow-hover);
+}
+
+.news-card img {
+  transition: transform 0.5s ease;
+  object-fit: cover;
+}
+
+.news-card:hover img {
+  transform: scale(1.05);
+}
+
+/* تحسين العناوين */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+/* تحسين الأزرار */
+.btn-news {
+  background-color: var(--news-accent);
+  color: white;
+  border-radius: 50px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 2px 4px rgba(230, 57, 70, 0.2);
+}
+
+.btn-news:hover {
+  background-color: var(--news-accent-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(230, 57, 70, 0.3);
+}
+
+/* تحسين القوائم */
+.navbar {
+  background-color: white;
+  box-shadow: 0 2px 10px var(--news-shadow);
+}
+
+.nav-link {
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.nav-link:hover {
+  background-color: rgba(230, 57, 70, 0.1);
+  color: var(--news-accent);
+}
+
+.nav-link.active {
+  color: var(--news-accent);
+  border-bottom: 2px solid var(--news-accent);
+}
+
+/* تحسين الشريط الجانبي */
+.sidebar {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px var(--news-shadow);
+}
+
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--news-accent);
+}
+
+/* تحسين صفحة التفاصيل */
+.article-detail {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px var(--news-shadow);
+}
+
+.article-detail img {
+  border-radius: 12px;
+  max-width: 100%;
+  height: auto;
+}
+
+.article-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.article-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  color: var(--news-text-light);
+}
+
+.article-content {
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+
+.article-content p {
+  margin-bottom: 1.5rem;
+}
+
+/* تحسين الشارات والعلامات */
+.badge {
+  padding: 0.35em 0.65em;
+  font-weight: 600;
+  border-radius: 50px;
+}
+
+.badge-category {
+  background-color: var(--news-accent);
+  color: white;
+}
+
+/* تحسين التذييل */
+footer {
+  background-color: var(--news-secondary);
+  color: white;
+  padding: 3rem 0;
+}
+
+.footer-title {
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+}
+
+.footer-link:hover {
+  color: white;
+  text-decoration: none;
+}
+
+/* تحسين الرسوم المتحركة */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+/* تحسين الاستجابة للأجهزة المحمولة */
+@media (max-width: 768px) {
+  .article-title {
+    font-size: 1.75rem;
+  }
+  
+  .article-detail {
+    padding: 1.5rem;
+  }
+  
+  .news-card {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* تحسين وضع الظلام */
+.dark-mode {
+  --news-background: #121212;
+  --news-card-bg: #1e1e1e;
+  --news-text: #e0e0e0;
+  --news-text-light: #a0a0a0;
+  --news-border: #333333;
+  --news-shadow: rgba(0, 0, 0, 0.2);
+  --news-shadow-hover: rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .navbar,
+.dark-mode .sidebar,
+.dark-mode .article-detail {
+  background-color: #1e1e1e;
+}
+
+.dark-mode footer {
+  background-color: #0f0f0f;
+}
+
+/* تحسين تجربة التحميل */
+.skeleton-loader {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dark-mode .skeleton-loader {
+  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+  background-size: 200% 100%;
+}
+
+/* تحسين عرض الصور */
+.image-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.image-container img {
+  transition: transform 0.5s ease;
+}
+
+.image-container:hover img {
+  transform: scale(1.05);
+}
+
+.image-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  padding: 1rem;
+  color: white;
+}
+
+/* تحسين أشرطة التمرير */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.dark-mode ::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+}
+
+.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
+}
