@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { useArticles } from "../context/ArticleContext";
 import ArticleCard from "../components/articles/ArticleCard";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -20,16 +20,41 @@ const Governorates = () => {
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>("الكل");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // إضافة أخبار تجريبية للمحافظات إذا لم تكن موجودة
+  const enhancedArticles = useMemo(() => {
+    const existingArticles = [...articles];
+    
+    // إضافة أخبار تجريبية لكل محافظة
+    if (articles.length < 10) {
+      EGYPTIAN_GOVERNORATES.forEach((gov, index) => {
+        existingArticles.push({
+          id: `gov-${index}`,
+          title: `أخبار مهمة من محافظة ${gov}`,
+          content: `تقرير شامل حول آخر التطورات والأحداث في محافظة ${gov}. يتضمن التقرير معلومات مفصلة حول التطورات الاقتصادية والاجتماعية والسياسية في المحافظة.`,
+          excerpt: `آخر الأخبار والتطورات في محافظة ${gov}`,
+          image: `https://images.unsplash.com/photo-1500000000000?w=600&h=400&fit=crop&auto=format`,
+          category: "محافظات",
+          date: new Date().toISOString(),
+          source: `مراسل ${gov}`,
+          readingTime: 3
+        });
+      });
+    }
+    
+    return existingArticles;
+  }, [articles]);
+
   // فلترة المقالات حسب المحافظة والبحث
   const filteredArticles = useMemo(() => {
-    let filtered = articles;
+    let filtered = enhancedArticles;
 
     // فلترة حسب المحافظة
     if (selectedGovernorate !== "الكل") {
       filtered = filtered.filter(article => 
         article.title.includes(selectedGovernorate) ||
         article.content.includes(selectedGovernorate) ||
-        article.excerpt?.includes(selectedGovernorate)
+        article.excerpt?.includes(selectedGovernorate) ||
+        article.category === "محافظات"
       );
     }
 
@@ -44,14 +69,14 @@ const Governorates = () => {
 
     // ترتيب حسب التاريخ
     return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [articles, selectedGovernorate, searchTerm]);
+  }, [enhancedArticles, selectedGovernorate, searchTerm]);
 
   // إحصائيات المحافظات
   const governorateStats = useMemo(() => {
     const stats: Record<string, number> = {};
     
     EGYPTIAN_GOVERNORATES.forEach(gov => {
-      stats[gov] = articles.filter(article =>
+      stats[gov] = enhancedArticles.filter(article =>
         article.title.includes(gov) ||
         article.content.includes(gov) ||
         article.excerpt?.includes(gov)
@@ -59,7 +84,7 @@ const Governorates = () => {
     });
 
     return stats;
-  }, [articles]);
+  }, [enhancedArticles]);
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -73,6 +98,19 @@ const Governorates = () => {
           تابع آخر الأخبار والأحداث في جميع محافظات جمهورية مصر العربية
         </p>
       </div>
+
+      {/* تنبيه في حالة عدم وجود أخبار كافية */}
+      {articles.length < 10 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <span className="text-blue-800 font-semibold">ملاحظة:</span>
+          </div>
+          <p className="text-blue-700 mt-1">
+            يتم عرض أخبار تجريبية للمحافظات. بمجرد إضافة أخبار حقيقية من خلاصات RSS أو Facebook، ستظهر هنا تلقائياً.
+          </p>
+        </div>
+      )}
 
       {/* البحث */}
       <div className="mb-6">
@@ -97,7 +135,7 @@ const Governorates = () => {
             onClick={() => setSelectedGovernorate("الكل")}
             className={selectedGovernorate === "الكل" ? "bg-news-accent hover:bg-news-accent/90" : ""}
           >
-            الكل ({articles.length})
+            الكل ({enhancedArticles.length})
           </Button>
           {EGYPTIAN_GOVERNORATES.map((gov) => (
             <Button

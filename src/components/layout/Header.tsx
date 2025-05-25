@@ -3,9 +3,6 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
 
-// استخدام اللوجو الصحيح المرفوع
-const LOGO_SRC = "/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png";
-
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
@@ -14,13 +11,16 @@ const Header = () => {
       ? location.pathname === "/"
       : location.pathname.startsWith(path);
 
-  // قائمة الروابط الأساسية
+  // قائمة الروابط الأساسية مع الأقسام الجديدة
   const navigation = [
     { name: "الرئيسية", path: "/" },
     { name: "الأخبار", path: "/news" },
     { name: "السياسة", path: "/politics" },
     { name: "الاقتصاد", path: "/economy" },
     { name: "المحافظات", path: "/governorates" },
+    { name: "الذكاء الاصطناعي", path: "/ai" },
+    { name: "عسكرية", path: "/military" },
+    { name: "العالم", path: "/world" },
     { name: "فيديوهات", path: "/videos" },
     { name: "اتصل بنا", path: "/contact" },
   ];
@@ -49,7 +49,6 @@ const Header = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            {/* رابط لوحة التحكم */}
             <Link
               to="/admin"
               className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
@@ -57,7 +56,6 @@ const Header = () => {
               <LayoutDashboard size={16} className="ml-0.5 inline" />
               لوحة التحكم
             </Link>
-            {/* رابط دخول */}
             <Link
               to="/admin/login"
               className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
@@ -75,13 +73,12 @@ const Header = () => {
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative">
               <img
-                src={LOGO_SRC}
+                src="/lovable-uploads/2238a7f0-4177-46ef-a6a8-fc8913645906.png"
                 alt="المصدر بلس"
                 className="h-14 w-14 md:h-20 md:w-20 rounded-xl shadow-lg shadow-news-accent/10 bg-white object-contain border-2 border-white transition group-hover:scale-105"
                 style={{ filter: "drop-shadow(0 0 8px #db1f2d22)" }}
                 onError={(e) => {
-                  console.log('Logo failed to load');
-                  // إضافة fallback للوجو
+                  console.log('Logo failed to load, using fallback');
                   e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%23db1f2d'/%3E%3Ctext x='40' y='45' text-anchor='middle' fill='white' font-size='14' font-weight='bold'%3E%D8%A7%D9%84%D9%85%D8%B5%D8%AF%D8%B1%3C/text%3E%3C/svg%3E";
                 }}
               />
@@ -106,13 +103,13 @@ const Header = () => {
       <nav className="bg-news-muted/90 shadow-inner shadow-news-accent/5 relative z-20 border-b border-news-accent/10">
         <div className="container mx-auto px-4">
           {/* Desktop Navigation */}
-          <div className="hidden md:flex gap-2">
+          <div className="hidden md:flex gap-2 overflow-x-auto">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
                 className={`
-                  px-5 py-3 text-white font-semibold rounded-t-xl transition-colors duration-150
+                  px-4 py-3 text-white font-semibold rounded-t-xl transition-colors duration-150 whitespace-nowrap
                   ${
                     isActive(item.path)
                       ? "bg-news-accent shadow text-yellow-300"

@@ -1,7 +1,8 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
-import { TrendingUp, PieChart, Video } from "lucide-react";
+import { TrendingUp, PieChart, Video, Brain, Shield, Globe } from "lucide-react";
 
 // Import refactored components
 import Navigation from "../components/home/Navigation";
@@ -71,6 +72,39 @@ const Home = () => {
         .slice(0, 4),
     [articles]
   );
+
+  const aiNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => (a.category === "ذكاء اصطناعي" || a.title.toLowerCase().includes("ذكاء اصطناعي") || a.title.toLowerCase().includes("ai")) && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const militaryNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => (a.category === "عسكرية" || a.title.toLowerCase().includes("عسكري") || a.title.toLowerCase().includes("دفاع")) && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const worldNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => (a.category === "العالم" || a.category === "دولية") && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
   
   const videoArticles = useMemo(
     () =>
@@ -106,7 +140,7 @@ const Home = () => {
       {/* Latest News */}
       <LatestNews latestNews={latestNews} />
 
-      {/* Categories and Videos */}
+      {/* Categories Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
         {/* Politics */}
         <CategorySection 
@@ -126,6 +160,33 @@ const Home = () => {
         
         {/* Videos */}
         <VideoSection videoArticles={videoArticles} />
+      </div>
+
+      {/* New Categories Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        {/* AI News */}
+        <CategorySection 
+          title="الذكاء الاصطناعي" 
+          icon={Brain} 
+          articles={aiNews} 
+          linkPath="/ai" 
+        />
+        
+        {/* Military News */}
+        <CategorySection 
+          title="الأخبار العسكرية" 
+          icon={Shield} 
+          articles={militaryNews} 
+          linkPath="/military" 
+        />
+        
+        {/* World News */}
+        <CategorySection 
+          title="أخبار العالم" 
+          icon={Globe} 
+          articles={worldNews} 
+          linkPath="/world" 
+        />
       </div>
     </div>
   );

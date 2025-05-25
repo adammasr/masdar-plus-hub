@@ -5,6 +5,9 @@ import Home from "./pages/Home";
 import Politics from "./pages/Politics";
 import Economy from "./pages/Economy";
 import Governorates from "./pages/Governorates";
+import AI from "./pages/AI";
+import Military from "./pages/Military";
+import World from "./pages/World";
 import News from "./pages/News";
 import Videos from "./pages/Videos";
 import Contact from "./pages/Contact";
@@ -51,6 +54,9 @@ function App() {
               <Route path="politics" element={<Politics />} />
               <Route path="economy" element={<Economy />} />
               <Route path="governorates" element={<Governorates />} />
+              <Route path="ai" element={<AI />} />
+              <Route path="military" element={<Military />} />
+              <Route path="world" element={<World />} />
               <Route path="news" element={<News />} />
               <Route path="videos" element={<Videos />} />
               <Route path="contact" element={<Contact />} />

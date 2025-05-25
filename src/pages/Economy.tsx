@@ -1,7 +1,7 @@
 
 import { useArticles } from "../context/ArticleContext";
 import ArticleGrid from "../components/articles/ArticleGrid";
-import { PieChart, DollarSign, TrendingUp } from "lucide-react";
+import { PieChart, TrendingUp, BarChart3 } from "lucide-react";
 
 const Economy = () => {
   const { articles } = useArticles();
@@ -17,53 +17,53 @@ const Economy = () => {
           <PieChart className="ml-2 text-news-accent" />
           الاقتصاد
         </h1>
-        <p className="text-gray-600">
-          آخر الأخبار والتحليلات الاقتصادية وأسعار العملات والبورصة
+        <p className="text-gray-600 mb-6">
+          آخر الأخبار والتحليلات الاقتصادية والمالية من مصادر موثوقة
         </p>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center mb-2">
-              <DollarSign className="text-green-600" />
-              <span className="font-bold">الدولار</span>
+        {/* مؤشرات اقتصادية عامة */}
+        <div className="bg-gradient-to-r from-blue-50 to-gray-50 p-6 rounded-lg border shadow-sm mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <BarChart3 className="text-blue-600" size={24} />
+            <h2 className="text-xl font-bold text-gray-800">المؤشرات الاقتصادية</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center mb-2">
+                <TrendingUp className="text-green-600 ml-2" size={20} />
+                <span className="font-bold">البورصة المصرية</span>
+              </div>
+              <div className="text-lg font-bold text-gray-700">
+                تابع أحدث الأخبار والتحليلات
+              </div>
             </div>
-            <div className="text-xl font-bold">30.94 <span className="text-xs">ج.م</span></div>
-            <div className="flex items-center justify-center text-xs text-green-600">
-              <TrendingUp size={12} className="ml-1" /> 0.05%
+            
+            <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center mb-2">
+                <PieChart className="text-blue-600 ml-2" size={20} />
+                <span className="font-bold">القطاع المصرفي</span>
+              </div>
+              <div className="text-lg font-bold text-gray-700">
+                أخبار البنوك والتمويل
+              </div>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
+              <div className="flex items-center justify-center mb-2">
+                <BarChart3 className="text-orange-600 ml-2" size={20} />
+                <span className="font-bold">الاستثمار</span>
+              </div>
+              <div className="text-lg font-bold text-gray-700">
+                فرص وتحليلات استثمارية
+              </div>
             </div>
           </div>
           
-          <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center mb-2">
-              <span className="font-bold ml-1">€</span>
-              <span className="font-bold">اليورو</span>
-            </div>
-            <div className="text-xl font-bold">33.41 <span className="text-xs">ج.م</span></div>
-            <div className="flex items-center justify-center text-xs text-red-600">
-              <TrendingUp size={12} className="ml-1 rotate-180" /> 0.12%
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center mb-2">
-              <span className="font-bold ml-1">£</span>
-              <span className="font-bold">الجنيه الإسترليني</span>
-            </div>
-            <div className="text-xl font-bold">39.05 <span className="text-xs">ج.م</span></div>
-            <div className="flex items-center justify-center text-xs text-green-600">
-              <TrendingUp size={12} className="ml-1" /> 0.23%
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg border shadow-sm text-center">
-            <div className="flex items-center justify-center mb-2">
-              <span className="font-bold ml-1">﷼</span>
-              <span className="font-bold">الريال السعودي</span>
-            </div>
-            <div className="text-xl font-bold">8.25 <span className="text-xs">ج.م</span></div>
-            <div className="flex items-center justify-center text-xs text-gray-600">
-              0.00%
-            </div>
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              * للحصول على أسعار العملات الحية، يرجى زيارة المواقع المتخصصة
+            </p>
           </div>
         </div>
       </div>
