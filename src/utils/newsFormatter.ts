@@ -8,7 +8,8 @@ export {
 } from "./articleProcessor";
 
 export {
-  extractImageFromContent
+  extractImageFromContent,
+  getContextualImage
 } from "./imageExtractor";
 
 export {

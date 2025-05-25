@@ -86,8 +86,8 @@ const extractOriginalRSSImage = (content: string): string | null => {
   return null;
 };
 
-// Get contextual image from Unsplash based on content
-const getContextualImage = (content: string): string => {
+// Get contextual image from Unsplash based on content - NOW EXPORTED
+export const getContextualImage = (content: string): string => {
   const contentLower = content.toLowerCase();
   const imageQueries = [];
   
