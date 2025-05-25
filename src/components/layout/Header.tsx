@@ -1,11 +1,13 @@
-
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogIn, LayoutDashboard } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const isActive = (path: string) =>
     path === "/"
       ? location.pathname === "/"
@@ -49,20 +51,24 @@ const Header = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              to="/admin"
-              className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
-            >
-              <LayoutDashboard size={16} className="ml-0.5 inline" />
-              لوحة التحكم
-            </Link>
-            <Link
-              to="/admin/login"
-              className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
-            >
-              <LogIn size={15} className="ml-0.5 inline" />
-              دخول
-            </Link>
+            {/* إخفاء رابط لوحة التحكم واستخدام useAuth للتحقق من حالة تسجيل الدخول */}
+            {isAuthenticated ? (
+              <Link
+                to="/admin"
+                className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
+              >
+                <LayoutDashboard size={16} className="ml-0.5 inline" />
+                لوحة التحكم
+              </Link>
+            ) : (
+              <Link
+                to="/admin/login"
+                className="flex items-center gap-1 text-xs md:text-sm hover:underline hover:text-yellow-300 transition"
+              >
+                <LogIn size={15} className="ml-0.5 inline" />
+                دخول
+              </Link>
+            )}
           </div>
         </div>
       </div>

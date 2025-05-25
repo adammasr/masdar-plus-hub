@@ -16,7 +16,7 @@ import ArticleDetail from "./pages/ArticleDetail";
 import { ArticleProvider } from "./context/ArticleContext";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
-import { AutoSyncService } from "./services/AutoSyncService";
+import useEnhancedAutoSync from "./hooks/useEnhancedAutoSync";
 import { useEffect } from "react";
 
 // Admin routes
@@ -28,20 +28,15 @@ import Articles from "./pages/admin/Articles";
 import NewArticle from "./pages/admin/NewArticle";
 import Users from "./pages/admin/Users";
 import Ads from "./pages/admin/Ads";
+import SystemTest from "./pages/admin/SystemTest";
+import QualityAnalysis from "./pages/admin/QualityAnalysis";
 
 import "./App.css";
 import { Toaster } from "sonner";
 
 function App() {
-  useEffect(() => {
-    // تهيئة خدمة المزامنة التلقائية
-    const autoSync = AutoSyncService.getInstance();
-    
-    return () => {
-      // تنظيف الخدمة عند إغلاق التطبيق
-      autoSync.destroy();
-    };
-  }, []);
+  // استخدام هوك المزامنة التلقائية المحسنة
+  useEnhancedAutoSync();
 
   return (
     <AuthProvider>
@@ -84,6 +79,8 @@ function App() {
               <Route path="categories" element={<Categories />} />
               <Route path="users" element={<Users />} />
               <Route path="ads" element={<Ads />} />
+              <Route path="system-test" element={<SystemTest />} />
+              <Route path="quality-analysis" element={<QualityAnalysis />} />
             </Route>
           </Routes>
           <Toaster position="top-center" richColors />
