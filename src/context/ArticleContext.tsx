@@ -39,9 +39,21 @@ export const ArticleProvider = ({ children }: { children: ReactNode }) => {
 
   // تحميل المقالات من localStorage عند بدء التطبيق
   useEffect(() => {
-    // مسح جميع المقالات المحفوظة وإعادة تعيين قائمة فارغة
-    setArticles(initialArticles);
-    localStorage.setItem('articles', JSON.stringify(initialArticles));
+    const savedArticles = localStorage.getItem('articles');
+    if (savedArticles) {
+      try {
+        const parsedArticles = JSON.parse(savedArticles);
+        setArticles(parsedArticles);
+      } catch (error) {
+        console.error('خطأ في تحميل المقالات من التخزين المحلي:', error);
+        // في حالة الخطأ فقط، استخدم قائمة فارغة
+        setArticles(initialArticles);
+      }
+    } else {
+      // إذا لم تكن هناك مقالات محفوظة، استخدم قائمة فارغة
+      setArticles(initialArticles);
+      localStorage.setItem('articles', JSON.stringify(initialArticles));
+    }
   }, []);
 
   // حفظ المقالات في localStorage عند كل تغيير
