@@ -1,7 +1,7 @@
-import { NewsItem } from '../../types/NewsItem';
-import { GeminiService } from './GeminiService';
-import { RssService } from './RssService';
-import { FacebookService } from './FacebookService';
+import { NewsItem } from '../types/NewsItem';
+import { GeminiService } from './api/GeminiService';
+import { RssService } from './api/RssService';
+import { FacebookService } from './api/FacebookService';
 import { toast } from 'sonner';
 
 // واجهة لتكوين خدمة المزامنة
