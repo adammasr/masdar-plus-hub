@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useArticles } from "../context/ArticleContext";
@@ -11,13 +12,16 @@ import {
   Link as LinkIcon, 
   ExternalLink,
   Tag,
-  Eye
+  Eye,
+  MapPin,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import ArticleCard from "../components/articles/ArticleCard";
 import { estimateReadingTime } from "../utils/newsFormatter";
+import { toast } from "sonner";
 
 const LOGO_SRC = "/logo.png";
 
@@ -27,65 +31,102 @@ const ArticleDetail = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   
-  // استخدام articleId أو id حسب المسار
   const currentId = articleId || id;
   const article = articles.find(a => a.id === currentId);
   
-  // الحصول على مقالات ذات صلة بناءً على الوسوم والفئة
+  // الحصول على مقالات ذات صلة
   const relatedArticles = articles
     .filter(a => {
       if (a.id === currentId) return false;
       
-      // أولوية للمقالات التي تحتوي على نفس الوسوم
       if (article?.tags && a.tags) {
         const sharedTags = article.tags.filter(tag => a.tags?.includes(tag));
         if (sharedTags.length > 0) return true;
       }
       
-      // ثم المقالات من نفس الفئة
       return a.category === article?.category;
     })
     .slice(0, 3);
   
-  // حساب وقت القراءة
   const readingTime = article ? estimateReadingTime(article.content) : 0;
   
-  // تنسيق التاريخ
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("ar-EG", { 
       year: "numeric", 
       month: "long", 
-      day: "numeric"
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
     });
   };
   
-  // مشاركة المقال
-  const handleShare = (platform?: string) => {
+  // تحسين مشاركة المقال
+  const handleShare = async (platform?: string) => {
     const url = window.location.href;
     const title = article?.title || "مقال من مصدر بلس";
     
-    switch(platform) {
-      case "facebook":
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
-        break;
-      case "twitter":
-        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, "_blank");
-        break;
-      case "copy":
-        navigator.clipboard.writeText(url).then(() => {
-          alert("تم نسخ الرابط!");
-        });
-        break;
-      default:
-        if (navigator.share) {
-          navigator.share({ title, url })
-            .catch(err => console.error("حدث خطأ أثناء المشاركة:", err));
-        } else {
-          navigator.clipboard.writeText(url);
-          alert("تم نسخ رابط المقال!");
-        }
+    try {
+      switch(platform) {
+        case "facebook":
+          const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`;
+          window.open(fbUrl, "_blank", "width=600,height=400");
+          toast.success("تم فتح فيسبوك للمشاركة");
+          break;
+          
+        case "twitter":
+          const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}&via=MasdarPlus`;
+          window.open(twitterUrl, "_blank", "width=600,height=400");
+          toast.success("تم فتح تويتر للمشاركة");
+          break;
+          
+        case "copy":
+          await navigator.clipboard.writeText(url);
+          toast.success("تم نسخ رابط المقال!");
+          break;
+          
+        default:
+          if (navigator.share) {
+            await navigator.share({ 
+              title, 
+              url,
+              text: article?.excerpt || "اقرأ هذا المقال من مصدر بلس"
+            });
+            toast.success("تم مشاركة المقال");
+          } else {
+            await navigator.clipboard.writeText(url);
+            toast.success("تم نسخ رابط المقال!");
+          }
+      }
+    } catch (error) {
+      console.error("خطأ في المشاركة:", error);
+      toast.error("فشل في المشاركة، يرجى المحاولة مرة أخرى");
     }
+  };
+  
+  // إنشاء محتوى مفصل للمقال
+  const generateDetailedContent = (article: any) => {
+    let detailedContent = article.content;
+    
+    // إضافة معلومات تفصيلية حسب الفئة
+    const categoryContext: Record<string, string> = {
+      'سياسة': 'هذا التطور السياسي يأتي في إطار الجهود المستمرة لتطوير الأداء الحكومي وتحسين الخدمات المقدمة للمواطنين.',
+      'اقتصاد': 'يُتوقع أن يكون لهذا القرار تأثير إيجابي على الاقتصاد المصري والأسواق المحلية في الفترة القادمة.',
+      'محافظات': 'تسعى المحافظات المختلفة إلى تطبيق مثل هذه المبادرات لتحسين جودة الحياة للمواطنين في جميع أنحاء الجمهورية.',
+      'ذكاء اصطناعي': 'تُعد هذه التطورات التقنية جزءاً من استراتيجية مصر للتحول الرقمي ومواكبة التطورات العالمية في مجال التكنولوجيا.',
+      'عسكرية': 'تأتي هذه التطورات في إطار تعزيز الأمن القومي المصري والحفاظ على الاستقرار في المنطقة.',
+      'العالم': 'هذا الحدث العالمي له تأثيرات مهمة على المنطقة العربية ومصر بشكل خاص.',
+      'رياضة': 'يُعد هذا الإنجاز الرياضي مصدر فخر للرياضة المصرية والعربية.'
+    };
+    
+    if (article.category && categoryContext[article.category]) {
+      detailedContent += `\n\n${categoryContext[article.category]}`;
+    }
+    
+    // إضافة تحليل إضافي
+    detailedContent += `\n\nوفي السياق ذاته، يُشير الخبراء إلى أهمية متابعة هذه التطورات والتفاعل معها بما يخدم المصلحة العامة.`;
+    
+    return detailedContent;
   };
   
   useEffect(() => {
@@ -125,9 +166,11 @@ const ArticleDetail = () => {
     return null;
   }
   
+  const detailedContent = generateDetailedContent(article);
+
   return (
     <div className="py-6 max-w-5xl mx-auto px-4">
-      {/* مسار التنقل (Breadcrumbs) */}
+      {/* مسار التنقل */}
       <nav className="mb-4 text-sm text-gray-500">
         <Link to="/" className="hover:text-news-accent">الرئيسية</Link>
         <span className="mx-2">›</span>
@@ -152,7 +195,6 @@ const ArticleDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            className="border-gray-200"
             onClick={() => handleShare("facebook")}
             title="مشاركة على فيسبوك"
           >
@@ -162,7 +204,6 @@ const ArticleDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            className="border-gray-200"
             onClick={() => handleShare("twitter")}
             title="مشاركة على تويتر"
           >
@@ -172,11 +213,19 @@ const ArticleDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            className="border-gray-200"
             onClick={() => handleShare("copy")}
             title="نسخ الرابط"
           >
             <LinkIcon size={18} />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleShare()}
+            title="مشاركة"
+          >
+            <Share2 size={18} />
           </Button>
         </div>
       </div>
@@ -184,7 +233,6 @@ const ArticleDetail = () => {
       {/* بطاقة المقال الرئيسية */}
       <Card className="overflow-hidden border-0 shadow-lg rounded-2xl">
         <div className="relative">
-          {/* صورة المقال مع تحميل تأخيري */}
           <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] relative">
             <img
               src={article.image || LOGO_SRC}
@@ -195,7 +243,6 @@ const ArticleDetail = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
           </div>
           
-          {/* معلومات المقال فوق الصورة */}
           <div className="absolute bottom-0 right-0 w-full p-6 text-white">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge className="bg-news-accent border-none px-3">{article.category}</Badge>
@@ -221,8 +268,8 @@ const ArticleDetail = () => {
                 <span>{readingTime} دقائق للقراءة</span>
               </div>
               <div className="flex items-center">
-                <Eye className="h-4 w-4 ml-1" />
-                <span>وقت القراءة المقدر</span>
+                <User className="h-4 w-4 ml-1" />
+                <span>مصدر بلس</span>
               </div>
             </div>
           </div>
@@ -244,12 +291,31 @@ const ArticleDetail = () => {
             </div>
           )}
           
-          {/* محتوى المقال */}
+          {/* محتوى المقال المفصل */}
           <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-p:leading-relaxed">
-            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+            <div dangerouslySetInnerHTML={{ __html: detailedContent.replace(/\n/g, '<br />') }} />
           </div>
           
-          {/* الكلمات المفتاحية والوسوم */}
+          {/* معلومات إضافية */}
+          <div className="mt-8 p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-gray-200 rounded-lg">
+            <h3 className="font-bold text-gray-800 mb-2">معلومات إضافية</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div>
+                <strong>تاريخ النشر:</strong> {formatDate(article.date)}
+              </div>
+              <div>
+                <strong>وقت القراءة:</strong> {readingTime} دقائق
+              </div>
+              <div>
+                <strong>الفئة:</strong> {article.category}
+              </div>
+              <div>
+                <strong>المصدر:</strong> {article.source || "مصدر بلس"}
+              </div>
+            </div>
+          </div>
+          
+          {/* الكلمات المفتاحية */}
           <div className="mt-10 pt-6 border-t border-gray-100">
             <div className="flex items-center gap-2 mb-4">
               <Tag className="text-gray-400" size={18} />
@@ -282,22 +348,40 @@ const ArticleDetail = () => {
             </div>
           </div>
           
-          {/* سؤال مثير للنقاش */}
+          {/* سؤال للتفاعل */}
           <div className="mt-8 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg">
             <h3 className="font-bold text-purple-800 mb-2">ما رأيك؟</h3>
             <p className="text-purple-700">
-              شاركنا رأيك حول هذا الموضوع في التعليقات أدناه. هل تعتقد أن هذا التطور سيؤثر على مستقبل المجال؟
+              شاركنا رأيك حول هذا الموضوع. هل تعتقد أن هذا التطور سيؤثر على مستقبل المجال؟
             </p>
           </div>
           
-          {/* زر المشاركة */}
-          <div className="mt-8">
+          {/* أزرار المشاركة */}
+          <div className="mt-8 flex flex-wrap gap-4">
             <Button
-              className="bg-news-accent hover:bg-news-accent/90 text-white w-full sm:w-auto flex items-center gap-2 justify-center"
+              className="bg-news-accent hover:bg-news-accent/90 text-white flex items-center gap-2"
               onClick={() => handleShare()}
             >
               <Share2 size={18} />
               <span>مشاركة المقال</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => handleShare("facebook")}
+            >
+              <Facebook size={18} />
+              <span>فيسبوك</span>
+            </Button>
+            
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => handleShare("twitter")}
+            >
+              <Twitter size={18} />
+              <span>تويتر</span>
             </Button>
           </div>
         </CardContent>
