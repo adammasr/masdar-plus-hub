@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import NewsGrid from "../components/news/NewsGrid";
 import NewsHeader from "../components/news/NewsHeader";
-import FilterSection from "../components/news/FilterSection";
 import PaginationControls from "../components/news/PaginationControls";
 import { AdSlot } from "../components/ads/AdService";
+import { Search, Filter } from "lucide-react";
 
 const Sports = () => {
   const { articles } = useArticles();
@@ -66,28 +66,61 @@ const Sports = () => {
 
   return (
     <div className="container mx-auto py-6 px-4">
-      <NewsHeader title="أخبار الرياضة" />
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4 text-gray-800">أخبار الرياضة</h1>
+        <p className="text-gray-600">آخر أخبار الرياضة المحلية والعالمية</p>
+      </div>
       
       <AdSlot position="header" className="mb-6" />
       
-      <FilterSection
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        totalArticles={sportsArticles.length}
-      />
+      {/* فلترة البحث */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="relative flex-1">
+          <input
+            type="search"
+            placeholder="ابحث في أخبار الرياضة..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="border border-gray-300 rounded-md px-10 py-2 w-full focus:outline-news-accent transition"
+            dir="rtl"
+          />
+          <Search size={18} className="absolute left-3 top-2.5 text-gray-400 pointer-events-none" />
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Filter size={18} className="text-gray-400" />
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as "date" | "title")}
+            className="border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-700"
+          >
+            <option value="date">ترتيب حسب التاريخ</option>
+            <option value="title">ترتيب حسب العنوان</option>
+          </select>
+          
+          <select
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value as "asc" | "desc")}
+            className="border border-gray-300 rounded-md px-3 py-2 bg-white text-gray-700"
+          >
+            <option value="desc">تنازلي</option>
+            <option value="asc">تصاعدي</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="mb-4 text-gray-600">
+        تم العثور على <span className="font-semibold text-news-accent">{sportsArticles.length}</span> خبر رياضي
+      </div>
 
       <NewsGrid articles={currentArticles} />
 
       <AdSlot position="article" className="my-8" />
 
       <PaginationControls
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        page={currentPage}
+        pageCount={totalPages}
+        setPage={setCurrentPage}
       />
 
       <AdSlot position="footer" className="mt-8" />

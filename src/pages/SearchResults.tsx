@@ -79,9 +79,9 @@ const SearchResults = () => {
           
           {totalPages > 1 && (
             <PaginationControls
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
+              page={currentPage}
+              pageCount={totalPages}
+              setPage={setCurrentPage}
             />
           )}
         </>
