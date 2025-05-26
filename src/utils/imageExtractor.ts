@@ -89,41 +89,31 @@ const extractOriginalRSSImage = (content: string): string | null => {
 // Get contextual image from Unsplash based on content - NOW EXPORTED
 export const getContextualImage = (content: string): string => {
   const contentLower = content.toLowerCase();
+  
+  // Enhanced Arabic content detection
   const imageQueries = [];
   
-  // Determine content category and generate appropriate search terms
-  if (contentLower.includes('ذكاء اصطناعي') || contentLower.includes('ai')) {
-    imageQueries.push('artificial-intelligence', 'technology', 'robot', 'computer');
-  } else if (contentLower.includes('تكنولوجيا') || contentLower.includes('تقنية')) {
-    imageQueries.push('technology', 'computer', 'digital', 'innovation');
-  } else if (contentLower.includes('سياسة') || contentLower.includes('حكومة') || contentLower.includes('رئيس')) {
-    imageQueries.push('government', 'politics', 'meeting', 'conference');
-  } else if (contentLower.includes('اقتصاد') || contentLower.includes('مال') || contentLower.includes('استثمار')) {
-    imageQueries.push('business', 'finance', 'money', 'economy');
+  // Arabic keywords mapping to appropriate searches
+  if (contentLower.includes('ذكاء اصطناعي') || contentLower.includes('ai') || contentLower.includes('تكنولوجيا')) {
+    return 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('سياسة') || contentLower.includes('حكومة') || contentLower.includes('رئيس') || contentLower.includes('وزير')) {
+    return 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('اقتصاد') || contentLower.includes('مال') || contentLower.includes('استثمار') || contentLower.includes('بنك')) {
+    return 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('عسكري') || contentLower.includes('دفاع') || contentLower.includes('جيش')) {
+    return 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('محافظ') || contentLower.includes('مدينة') || contentLower.includes('محلي')) {
+    return 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('دولي') || contentLower.includes('عالم') || contentLower.includes('خارجي')) {
+    return 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=60';
   } else if (contentLower.includes('رياضة') || contentLower.includes('كرة') || contentLower.includes('مباراة')) {
-    imageQueries.push('sports', 'football', 'soccer', 'stadium');
-  } else if (contentLower.includes('صحة') || contentLower.includes('طب')) {
-    imageQueries.push('health', 'medical', 'hospital', 'doctor');
-  } else if (contentLower.includes('عسكري') || contentLower.includes('دفاع')) {
-    imageQueries.push('military', 'defense', 'security', 'army');
-  } else if (contentLower.includes('علم') || contentLower.includes('بحث')) {
-    imageQueries.push('science', 'research', 'laboratory', 'discovery');
-  } else if (contentLower.includes('تعليم') || contentLower.includes('جامعة')) {
-    imageQueries.push('education', 'university', 'students', 'learning');
-  } else if (contentLower.includes('بيئة') || contentLower.includes('مناخ')) {
-    imageQueries.push('environment', 'nature', 'climate', 'earth');
+    return 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=60';
+  } else if (contentLower.includes('صحة') || contentLower.includes('طب') || contentLower.includes('مستشفى')) {
+    return 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&auto=format&fit=crop&q=60';
   }
   
-  // If no specific category, use general news-related terms
-  if (imageQueries.length === 0) {
-    imageQueries.push('news', 'newspaper', 'journalism', 'media');
-  }
-  
-  // Select a random query and generate Unsplash URL
-  const randomQuery = imageQueries[Math.floor(Math.random() * imageQueries.length)];
-  const randomId = Math.floor(Math.random() * 1000);
-  
-  return `https://images.unsplash.com/photo-${1500000000000 + randomId}?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=search-${randomQuery}`;
+  // Default news image for general content
+  return 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60';
 };
 
 // Score images based on quality indicators
@@ -138,6 +128,8 @@ const scoreImage = (imageUrl: string): number => {
   // Prefer certain domains
   if (imageUrl.includes('unsplash.com')) score += 2;
   if (imageUrl.includes('reuters.com')) score += 2;
+  if (imageUrl.includes('aljazeera.net')) score += 2;
+  if (imageUrl.includes('bbc.com')) score += 2;
   
   // Check for resolution patterns
   const resMatch = imageUrl.match(/(\d+)x(\d+)/);

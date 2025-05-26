@@ -1,3 +1,4 @@
+
 // تحسين خدمة جلب الصور للأخبار
 import axios from 'axios';
 import { NewsItem } from '../../types/NewsItem';
@@ -12,39 +13,39 @@ export class ImageService {
   // مجموعة من الصور الاحتياطية مصنفة حسب الفئات
   private fallbackImages: Record<string, string[]> = {
     'سياسة': [
-      'https://cdn.pixabay.com/photo/2019/04/14/08/09/egypt-4126012_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/10/17/19/11/egypt-2861308_1280.jpg',
-      'https://cdn.pixabay.com/photo/2015/11/04/20/59/egypt-1023331_1280.jpg'
+      'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop&q=60'
     ],
     'اقتصاد': [
-      'https://cdn.pixabay.com/photo/2017/12/26/09/15/woman-3040029_1280.jpg',
-      'https://cdn.pixabay.com/photo/2016/11/27/21/42/stock-1863880_1280.jpg',
-      'https://cdn.pixabay.com/photo/2020/07/23/01/29/finance-5430089_1280.jpg'
+      'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&auto=format&fit=crop&q=60'
     ],
     'محافظات': [
-      'https://cdn.pixabay.com/photo/2020/01/20/19/08/alexandria-4781602_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/01/14/13/59/egypt-1979445_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/12/16/22/22/egypt-3023003_1280.jpg'
+      'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1558008258-3256797b43f3?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&auto=format&fit=crop&q=60'
     ],
     'ذكاء اصطناعي': [
-      'https://cdn.pixabay.com/photo/2018/09/27/09/22/artificial-intelligence-3706562_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/05/10/19/29/robot-2301646_1280.jpg',
-      'https://cdn.pixabay.com/photo/2020/01/31/07/26/robot-4807311_1280.jpg'
+      'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&auto=format&fit=crop&q=60'
     ],
     'عسكرية': [
-      'https://cdn.pixabay.com/photo/2016/03/27/19/29/soldier-1283789_1280.jpg',
-      'https://cdn.pixabay.com/photo/2018/05/11/09/51/peace-3390611_1280.jpg',
-      'https://cdn.pixabay.com/photo/2014/10/02/06/34/military-helicopter-469200_1280.jpg'
+      'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1569982175971-d92b01cf8694?w=800&auto=format&fit=crop&q=60'
     ],
     'العالم': [
-      'https://cdn.pixabay.com/photo/2016/10/20/18/35/earth-1756274_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/08/14/08/39/globe-2639507_1280.jpg',
-      'https://cdn.pixabay.com/photo/2017/06/14/08/20/map-of-the-world-2401458_1280.jpg'
+      'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1457464901128-858c524a9b7b?w=800&auto=format&fit=crop&q=60'
     ],
     'أخبار': [
-      'https://cdn.pixabay.com/photo/2017/08/10/02/05/tiles-shapes-2617112_1280.jpg',
-      'https://cdn.pixabay.com/photo/2016/02/01/00/56/news-1172463_1280.jpg',
-      'https://cdn.pixabay.com/photo/2014/05/21/22/28/old-newspaper-350376_1280.jpg'
+      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=800&auto=format&fit=crop&q=60'
     ]
   };
 
