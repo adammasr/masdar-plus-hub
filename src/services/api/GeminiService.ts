@@ -38,6 +38,79 @@ export class GeminiService {
   }
 
   /**
+   * تصنيف المحتوى إلى فئات
+   */
+  public async classifyContent(content: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      
+      const prompt = `
+حدد الفئة الأنسب لهذا المحتوى الإخباري من الفئات التالية:
+- سياسة
+- اقتصاد  
+- محافظات
+- ذكاء اصطناعي
+- عسكرية
+- العالم
+- رياضة
+- أخبار
+
+المحتوى: "${content.substring(0, 500)}"
+
+اكتب اسم الفئة فقط بدون أي تفسير:
+`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const category = response.text().trim();
+      
+      // التحقق من صحة الفئة
+      const validCategories = ['سياسة', 'اقتصاد', 'محافظات', 'ذكاء اصطناعي', 'عسكرية', 'العالم', 'رياضة', 'أخبار'];
+      
+      if (validCategories.includes(category)) {
+        return category;
+      }
+      
+      // تصنيف افتراضي بناءً على الكلمات المفتاحية
+      return this.classifyByKeywords(content);
+    } catch (error) {
+      console.error('خطأ في تصنيف المحتوى:', error);
+      return this.classifyByKeywords(content);
+    }
+  }
+
+  /**
+   * تصنيف بناءً على الكلمات المفتاحية
+   */
+  private classifyByKeywords(content: string): string {
+    const lowerContent = content.toLowerCase();
+    
+    if (lowerContent.includes('وزير') || lowerContent.includes('حكومة') || lowerContent.includes('رئيس')) {
+      return 'سياسة';
+    }
+    if (lowerContent.includes('اقتصاد') || lowerContent.includes('استثمار') || lowerContent.includes('بورصة')) {
+      return 'اقتصاد';
+    }
+    if (lowerContent.includes('محافظة') || lowerContent.includes('المنوفية') || lowerContent.includes('القاهرة')) {
+      return 'محافظات';
+    }
+    if (lowerContent.includes('ذكاء اصطناعي') || lowerContent.includes('تكنولوجيا') || lowerContent.includes('ai')) {
+      return 'ذكاء اصطناعي';
+    }
+    if (lowerContent.includes('جيش') || lowerContent.includes('عسكري') || lowerContent.includes('أمن')) {
+      return 'عسكرية';
+    }
+    if (lowerContent.includes('رياضة') || lowerContent.includes('كرة') || lowerContent.includes('أولمبياد')) {
+      return 'رياضة';
+    }
+    if (lowerContent.includes('دولي') || lowerContent.includes('عالمي') || lowerContent.includes('أمريكا')) {
+      return 'العالم';
+    }
+    
+    return 'أخبار';
+  }
+
+  /**
    * إعادة صياغة المحتوى بطريقة احترافية
    */
   public async rewriteContent(request: RewriteRequest): Promise<string> {
