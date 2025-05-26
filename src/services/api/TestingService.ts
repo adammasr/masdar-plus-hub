@@ -79,10 +79,10 @@ export class TestingService {
   private static async testFetching(rssService: RssService, facebookService: FacebookService) {
     try {
       // جلب عينة من الأخبار من RSS
-      const rssItems = await rssService.fetchSampleFeeds();
+      const rssItems = await rssService.fetchAllFeeds();
       
       // جلب عينة من المنشورات من فيسبوك
-      const facebookItems = await facebookService.fetchSamplePages();
+      const facebookItems = await facebookService.fetchAllPages();
       
       // دمج النتائج
       const allItems = [...rssItems, ...facebookItems];
@@ -106,7 +106,12 @@ export class TestingService {
       
       // إعادة صياغة محتوى الخبر
       const originalContent = newsItem.content.substring(0, 200); // أخذ جزء من المحتوى للاختبار
-      const rewrittenContent = await geminiService.rewriteContent(originalContent);
+      const rewrittenContent = await geminiService.rewriteContent({
+        originalText: originalContent,
+        category: newsItem.category,
+        source: newsItem.source,
+        tone: 'neutral'
+      });
       
       // التحقق من جودة إعادة الصياغة
       const isValid = rewrittenContent && 
