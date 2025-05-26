@@ -1,23 +1,21 @@
-
 import { NewsItem } from '../types/NewsItem';
-import { GeminiService } from './api/GeminiService';
-import { RssService } from './api/RssService';
-import { FacebookService } from './api/FacebookService';
+import { EnhancedNewsService } from './api/EnhancedNewsService';
 import { toast } from 'sonner';
 
 // واجهة لتكوين خدمة المزامنة
 export interface SyncConfig {
   enabled: boolean;
   interval: number; // بالدقائق
+  maxArticles: number; // الحد الأقصى للمقالات المحفوظة
   sources: {
+    newsApi: boolean;
     rss: boolean;
-    facebook: boolean;
   };
 }
 
 /**
  * خدمة المزامنة التلقائية المحسنة
- * تجمع بين مصادر RSS وفيسبوك مع إعادة الصياغة والتصنيف التلقائي
+ * تستخدم جميع مصادر الأخبار مع الذكاء الاصطناعي للمعالجة
  */
 export class EnhancedAutoSyncService {
   private static instance: EnhancedAutoSyncService | null = null;
@@ -27,15 +25,11 @@ export class EnhancedAutoSyncService {
   private isSyncing: boolean = false;
   
   // الخدمات المستخدمة
-  private rssService: RssService;
-  private facebookService: FacebookService;
-  private geminiService: GeminiService;
+  private enhancedNewsService: EnhancedNewsService;
 
   private constructor() {
-    // تهيئة الخدمات
-    this.rssService = RssService.getInstance();
-    this.facebookService = FacebookService.getInstance();
-    this.geminiService = GeminiService.getInstance();
+    // تهيئة خدمة الأخبار المحسنة
+    this.enhancedNewsService = EnhancedNewsService.getInstance();
     
     // تحميل التكوين من التخزين المحلي أو استخدام الافتراضي
     const savedConfig = localStorage.getItem('autoSyncConfig');
@@ -70,10 +64,11 @@ export class EnhancedAutoSyncService {
   private getDefaultConfig(): SyncConfig {
     return {
       enabled: true,
-      interval: 30, // كل نصف ساعة
+      interval: 60, // كل ساعة
+      maxArticles: 1000, // حد أقصى 1000 مقال
       sources: {
-        rss: true,
-        facebook: false // تعطيل فيسبوك مؤقتاً لحين إعداد الـ API
+        newsApi: true,
+        rss: true
       }
     };
   }
@@ -95,7 +90,7 @@ export class EnhancedAutoSyncService {
   }
 
   /**
-   * المزامنة من جميع المصادر المكونة
+   * المزامنة الرئيسية - جلب ومعالجة الأخبار
    */
   private async syncFromSources(): Promise<void> {
     if (this.isSyncing) {
@@ -108,36 +103,17 @@ export class EnhancedAutoSyncService {
     try {
       console.log('🔄 بدء المزامنة التلقائية المحسنة...');
       
-      let newArticlesCount = 0;
-      const allNewsItems: NewsItem[] = [];
-      
-      // جلب الأخبار من تغذيات RSS
-      if (this.config.sources.rss) {
-        try {
-          const rssItems = await this.rssService.fetchAllFeeds();
-          allNewsItems.push(...rssItems);
-          console.log(`📰 تم جلب ${rssItems.length} خبر من RSS`);
-        } catch (error) {
-          console.error('خطأ في جلب أخبار RSS:', error);
-          toast.error('فشل في جلب أخبار RSS');
-        }
-      }
-      
-      // جلب المنشورات من صفحات فيسبوك (إذا كان مفعلاً)
-      if (this.config.sources.facebook) {
-        try {
-          const facebookItems = await this.facebookService.fetchAllPages();
-          allNewsItems.push(...facebookItems);
-          console.log(`📘 تم جلب ${facebookItems.length} منشور من فيسبوك`);
-        } catch (error) {
-          console.error('خطأ في جلب منشورات فيسبوك:', error);
-        }
-      }
+      // جلب ومعالجة الأخبار من جميع المصادر
+      const processedNews = await this.enhancedNewsService.fetchAndProcessAllNews();
       
       // إضافة الأخبار الجديدة
-      if (allNewsItems.length > 0) {
-        newArticlesCount = this.addNewArticles(allNewsItems);
+      let newArticlesCount = 0;
+      if (processedNews.length > 0) {
+        newArticlesCount = this.addNewArticles(processedNews);
       }
+      
+      // تنظيف المقالات القديمة
+      this.cleanOldArticles();
       
       // إرسال حدث للإشعار بالتحديث
       window.dispatchEvent(new CustomEvent('articlesUpdated', {
@@ -146,9 +122,9 @@ export class EnhancedAutoSyncService {
       
       // عرض إشعار للمستخدم
       if (newArticlesCount > 0) {
-        toast.success(`✅ تم إضافة ${newArticlesCount} خبر جديد`, {
+        toast.success(`✅ تم إضافة ${newArticlesCount} خبر جديد محسن بالذكاء الاصطناعي`, {
           description: `آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`,
-          duration: 5000
+          duration: 6000
         });
         console.log(`✅ تم إضافة ${newArticlesCount} خبر جديد إلى الموقع`);
       } else if (!this.isFirstRun) {
@@ -157,6 +133,9 @@ export class EnhancedAutoSyncService {
           duration: 3000
         });
       }
+      
+      // حفظ آخر وقت مزامنة
+      localStorage.setItem('lastAutoSync', new Date().toISOString());
       
       this.isFirstRun = false;
     } catch (error) {
@@ -173,7 +152,7 @@ export class EnhancedAutoSyncService {
   private addNewArticles(newArticles: NewsItem[]): number {
     const existingArticles = JSON.parse(localStorage.getItem('articles') || '[]');
     
-    // تصفية الأخبار المكررة بناءً على العنوان والمصدر
+    // تصفية الأخبار المكررة بناءً على التشابه المتقدم
     const uniqueNewArticles = newArticles.filter(newArticle => 
       !existingArticles.some((existing: any) => 
         this.isSimilarArticle(existing, newArticle)
@@ -189,8 +168,8 @@ export class EnhancedAutoSyncService {
       // دمج الأخبار الجديدة مع الموجودة
       const updatedArticles = [...sortedNewArticles, ...existingArticles];
       
-      // الاحتفاظ بآخر 500 خبر فقط لتجنب امتلاء التخزين
-      const limitedArticles = updatedArticles.slice(0, 500);
+      // تطبيق الحد الأقصى للمقالات
+      const limitedArticles = updatedArticles.slice(0, this.config.maxArticles);
       
       // حفظ الأخبار المحدثة
       localStorage.setItem('articles', JSON.stringify(limitedArticles));
@@ -202,7 +181,7 @@ export class EnhancedAutoSyncService {
   }
 
   /**
-   * التحقق من تشابه المقالات لتجنب التكرار
+   * التحقق من تشابه المقالات المتقدم
    */
   private isSimilarArticle(existing: any, newArticle: NewsItem): boolean {
     // مقارنة العناوين
@@ -215,29 +194,51 @@ export class EnhancedAutoSyncService {
     }
     
     // مقارنة المحتوى للمقالات القصيرة
-    if (existing.content && newArticle.content && 
-        existing.content.length < 200 && newArticle.content.length < 200) {
-      const contentSimilarity = this.calculateSimilarity(existing.content, newArticle.content);
-      return contentSimilarity > 0.9;
+    if (existing.content && newArticle.content) {
+      const contentSimilarity = this.calculateSimilarity(
+        existing.content.substring(0, 200), 
+        newArticle.content.substring(0, 200)
+      );
+      if (contentSimilarity > 0.85) return true;
+    }
+    
+    // مقارنة المصدر والتاريخ
+    if (existing.source === newArticle.source) {
+      const existingDate = new Date(existing.date).getTime();
+      const newDate = new Date(newArticle.date).getTime();
+      const timeDiff = Math.abs(existingDate - newDate);
+      
+      // إذا كانا من نفس المصدر وفي نفس اليوم تقريباً
+      if (timeDiff < 24 * 60 * 60 * 1000) { // أقل من 24 ساعة
+        return titleSimilarity > 0.6;
+      }
     }
     
     return false;
   }
 
   /**
-   * حساب درجة التشابه بين نصين
+   * حساب درجة التشابه بين نصين (محسن)
    */
   private calculateSimilarity(text1: string, text2: string): number {
     if (!text1 || !text2) return 0;
     
-    const normalize = (str: string) => str.toLowerCase().replace(/[^\w\s]/g, '').trim();
+    const normalize = (str: string) => str
+      .toLowerCase()
+      .replace(/[^\u0600-\u06FF\s]/g, '') // الاحتفاظ بالعربية والمسافات فقط
+      .replace(/\s+/g, ' ')
+      .trim();
+    
     const norm1 = normalize(text1);
     const norm2 = normalize(text2);
     
     if (norm1 === norm2) return 1;
     
-    const words1 = norm1.split(/\s+/);
-    const words2 = norm2.split(/\s+/);
+    // حساب التشابه بناءً على الكلمات المشتركة
+    const words1 = norm1.split(/\s+/).filter(word => word.length > 2);
+    const words2 = norm2.split(/\s+/).filter(word => word.length > 2);
+    
+    if (words1.length === 0 || words2.length === 0) return 0;
     
     const commonWords = words1.filter(word => words2.includes(word));
     const totalWords = Math.max(words1.length, words2.length);
@@ -246,13 +247,37 @@ export class EnhancedAutoSyncService {
   }
 
   /**
+   * تنظيف المقالات القديمة
+   */
+  private cleanOldArticles(): void {
+    try {
+      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
+      
+      if (articles.length > this.config.maxArticles) {
+        // ترتيب حسب التاريخ والاحتفاظ بالأحدث
+        const sortedArticles = articles.sort((a: any, b: any) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        
+        const cleanedArticles = sortedArticles.slice(0, this.config.maxArticles);
+        localStorage.setItem('articles', JSON.stringify(cleanedArticles));
+        
+        const removedCount = articles.length - cleanedArticles.length;
+        console.log(`🧹 تم حذف ${removedCount} مقال قديم`);
+      }
+    } catch (error) {
+      console.error('خطأ في تنظيف المقالات القديمة:', error);
+    }
+  }
+
+  /**
    * بدء المزامنة التلقائية
    */
   private startAutoSync(): void {
     if (!this.config.enabled) return;
     
-    // تنفيذ أول مزامنة بعد 5 ثوان من بدء التطبيق
-    setTimeout(() => this.syncFromSources(), 5000);
+    // تنفيذ أول مزامنة بعد 10 ثوان من بدء التطبيق
+    setTimeout(() => this.syncFromSources(), 10000);
     
     // إعداد المزامنة الدورية
     this.syncInterval = setInterval(() => {
@@ -297,14 +322,19 @@ export class EnhancedAutoSyncService {
       return;
     }
     
-    toast.info('بدء المزامنة اليدوية...');
+    toast.info('بدء المزامنة اليدوية المحسنة...');
     this.syncFromSources();
   }
 
   /**
    * الحصول على حالة المزامنة
    */
-  public getSyncStatus(): { isEnabled: boolean; isSyncing: boolean; nextSync: string } {
+  public getSyncStatus(): { isEnabled: boolean; isSyncing: boolean; nextSync: string; lastSync: string } {
+    const lastSync = localStorage.getItem('lastAutoSync');
+    const lastSyncFormatted = lastSync ? 
+      new Date(lastSync).toLocaleString('ar-EG') : 
+      'لم يتم بعد';
+    
     const nextSyncTime = this.syncInterval ? 
       new Date(Date.now() + this.config.interval * 60 * 1000).toLocaleTimeString('ar-EG') : 
       'غير محدد';
@@ -312,7 +342,8 @@ export class EnhancedAutoSyncService {
     return {
       isEnabled: this.config.enabled,
       isSyncing: this.isSyncing,
-      nextSync: nextSyncTime
+      nextSync: nextSyncTime,
+      lastSync: lastSyncFormatted
     };
   }
 

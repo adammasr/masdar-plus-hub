@@ -1,41 +1,25 @@
-import axios from 'axios';
 
-// واجهة لتكوين خدمة Gemini
-export interface GeminiConfig {
-  apiKey: string;
-  model: string;
-  temperature: number;
-  maxTokens: number;
-}
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// واجهة لطلب إعادة الصياغة
 export interface RewriteRequest {
   originalText: string;
-  category?: string;
-  source?: string;
-  tone?: 'formal' | 'neutral' | 'engaging';
+  category: string;
+  source: string;
+  tone?: 'formal' | 'casual' | 'neutral';
 }
 
 /**
- * خدمة للتفاعل مع واجهة برمجة تطبيقات Gemini للذكاء الاصطناعي
+ * خدمة Gemini AI المحسنة لإعادة صياغة الأخبار
  */
 export class GeminiService {
   private static instance: GeminiService | null = null;
-  private config: GeminiConfig;
+  private genAI: GoogleGenerativeAI;
+  private apiKey: string = 'AIzaSyAzQEejlpDswE6uoLVWUkUgSh_VNT0FlP0';
 
   private constructor() {
-    // التكوين الافتراضي
-    this.config = {
-      apiKey: 'AIzaSyAzQEejlpDswE6uoLVWUkUgSh_VNT0FlP0',
-      model: 'gemini-pro',
-      temperature: 0.7,
-      maxTokens: 1024
-    };
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
   }
 
-  /**
-   * الحصول على نسخة واحدة من الخدمة (نمط Singleton)
-   */
   public static getInstance(): GeminiService {
     if (!GeminiService.instance) {
       GeminiService.instance = new GeminiService();
@@ -46,192 +30,159 @@ export class GeminiService {
   /**
    * تحديث تكوين الخدمة
    */
-  public updateConfig(newConfig: Partial<GeminiConfig>): void {
-    this.config = { ...this.config, ...newConfig };
+  public updateConfig(config: { apiKey?: string }): void {
+    if (config.apiKey) {
+      this.apiKey = config.apiKey;
+      this.genAI = new GoogleGenerativeAI(this.apiKey);
+    }
   }
 
   /**
-   * إعادة صياغة نص باستخدام Gemini
+   * إعادة صياغة المحتوى بطريقة احترافية
    */
   public async rewriteContent(request: RewriteRequest): Promise<string> {
     try {
-      const { originalText, category = 'عام', source = 'غير محدد', tone = 'neutral' } = request;
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
       
-      // بناء موجه للنموذج
-      const prompt = this.buildRewritePrompt(originalText, category, source, tone);
+      const prompt = this.buildRewritePrompt(request);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const rewrittenText = response.text();
       
-      // إرسال الطلب إلى واجهة برمجة تطبيقات Gemini
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent`,
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: this.config.temperature,
-            maxOutputTokens: this.config.maxTokens,
-            topP: 0.9,
-            topK: 40
-          }
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': this.config.apiKey
-          }
-        }
-      );
-
-      // استخراج النص المعاد صياغته من الاستجابة
-      const rewrittenText = this.extractRewrittenText(response.data);
-      return rewrittenText;
+      // تنظيف النص المُعاد صياغته
+      return this.cleanRewrittenText(rewrittenText);
     } catch (error) {
-      console.error('خطأ في إعادة صياغة المحتوى:', error);
-      // في حالة الفشل، إرجاع النص الأصلي
-      return request.originalText;
+      console.error('خطأ في إعادة الصياغة:', error);
+      // في حالة الفشل، إرجاع نص محسن بدلاً من النص الأصلي
+      return this.enhanceOriginalText(request.originalText, request.category);
     }
   }
 
   /**
-   * تصنيف نص الخبر إلى فئة مناسبة
+   * بناء prompt محسن لإعادة الصياغة
    */
-  public async classifyContent(text: string): Promise<string> {
-    try {
-      const prompt = `
-      صنف النص التالي إلى واحدة من الفئات التالية: "سياسة"، "اقتصاد"، "محافظات"، "ذكاء اصطناعي"، "عسكرية"، "العالم"، "أخبار عامة".
-      اختر الفئة الأكثر ملاءمة بناءً على محتوى النص.
-      
-      النص:
-      ${text}
-      
-      الفئة:
-      `;
-
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent`,
-        {
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 10,
-            topP: 0.9,
-            topK: 40
-          }
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'x-goog-api-key': this.config.apiKey
-          }
-        }
-      );
-
-      // استخراج الفئة من الاستجابة
-      const category = this.extractCategory(response.data);
-      return this.mapCategoryToSystem(category);
-    } catch (error) {
-      console.error('خطأ في تصنيف المحتوى:', error);
-      return 'أخبار';
-    }
-  }
-
-  /**
-   * بناء موجه لإعادة صياغة النص
-   */
-  private buildRewritePrompt(text: string, category: string, source: string, tone: string): string {
-    let toneDescription = '';
-    switch (tone) {
-      case 'formal':
-        toneDescription = 'رسمي ومهني';
-        break;
-      case 'engaging':
-        toneDescription = 'جذاب ومثير للاهتمام';
-        break;
-      default:
-        toneDescription = 'محايد ومتوازن';
-    }
-
+  private buildRewritePrompt(request: RewriteRequest): string {
+    const categoryContext = this.getCategoryContext(request.category);
+    const toneInstructions = this.getToneInstructions(request.tone || 'neutral');
+    
     return `
-    أعد صياغة النص التالي ليكون خبراً صحفياً بأسلوب ${toneDescription}. 
-    حافظ على جميع المعلومات الأساسية والحقائق، مع تحسين الأسلوب والتنظيم.
-    تجنب العبارات المكررة والكلمات الزائدة.
-    قم بتنظيم النص في فقرات واضحة مع عنوان جذاب.
-    الفئة: ${category}
-    المصدر: ${source}
-    
-    النص الأصلي:
-    ${text}
-    
-    النص المعاد صياغته:
-    `;
+أنت محرر أخبار محترف في موقع "مصدر بلس" الإخباري المصري. مهمتك هي إعادة صياغة الخبر التالي بطريقة احترافية وجذابة.
+
+المتطلبات:
+- اكتب بالعربية الفصحى
+- حافظ على جميع الحقائق والأرقام الأصلية
+- اجعل العنوان جذاباً ومناسباً للقراء المصريين
+- ${categoryContext}
+- ${toneInstructions}
+- اكتب مقدمة قوية تجذب القارئ
+- نظم المحتوى في فقرات واضحة ومترابطة
+- أضف سياق مناسب للقراء المصريين
+- تجنب التكرار والحشو
+
+النص الأصلي:
+"${request.originalText}"
+
+المصدر: ${request.source}
+الفئة: ${request.category}
+
+أعد صياغة هذا الخبر بطريقة احترافية، مع الحفاظ على المعلومات الأساسية وجعله أكثر جاذبية للقراء:
+`;
   }
 
   /**
-   * استخراج النص المعاد صياغته من استجابة Gemini
+   * الحصول على سياق الفئة
    */
-  private extractRewrittenText(response: any): string {
-    try {
-      if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return response.candidates[0].content.parts[0].text.trim();
-      }
-      throw new Error('تنسيق استجابة غير متوقع');
-    } catch (error) {
-      console.error('خطأ في استخراج النص المعاد صياغته:', error);
-      return '';
-    }
-  }
-
-  /**
-   * استخراج الفئة من استجابة Gemini
-   */
-  private extractCategory(response: any): string {
-    try {
-      if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return response.candidates[0].content.parts[0].text.trim();
-      }
-      throw new Error('تنسيق استجابة غير متوقع');
-    } catch (error) {
-      console.error('خطأ في استخراج الفئة:', error);
-      return 'أخبار عامة';
-    }
-  }
-
-  /**
-   * تحويل الفئة المستخرجة إلى فئة النظام
-   */
-  private mapCategoryToSystem(category: string): string {
-    const categoryMap: Record<string, string> = {
-      'سياسة': 'سياسة',
-      'اقتصاد': 'اقتصاد',
-      'محافظات': 'محافظات',
-      'ذكاء اصطناعي': 'ذكاء اصطناعي',
-      'عسكرية': 'عسكرية',
-      'العالم': 'العالم',
-      'أخبار عامة': 'أخبار'
+  private getCategoryContext(category: string): string {
+    const contextMap: Record<string, string> = {
+      'سياسة': 'ركز على التأثيرات السياسية والقرارات الحكومية المهمة للمواطن المصري',
+      'اقتصاد': 'اشرح التأثيرات الاقتصادية على المواطن العادي والأسواق المصرية',
+      'محافظات': 'ركز على تأثير الخبر على المواطنين في المحافظات المختلفة',
+      'ذكاء اصطناعي': 'اربط التطورات التقنية بالواقع المصري وفرص المستقبل',
+      'عسكرية': 'ركز على الأمن القومي والاستقرار في المنطقة',
+      'العالم': 'اربط الأحداث العالمية بتأثيرها على مصر والمنطقة العربية',
+      'رياضة': 'ركز على الإنجازات الرياضية والفرق المصرية'
     };
+    
+    return contextMap[category] || 'اكتب بطريقة تناسب الجمهور المصري العام';
+  }
 
-    // البحث عن تطابق جزئي إذا لم يكن هناك تطابق دقيق
-    for (const [key, value] of Object.entries(categoryMap)) {
-      if (category.includes(key)) {
-        return value;
-      }
+  /**
+   * تعليمات النبرة
+   */
+  private getToneInstructions(tone: string): string {
+    const toneMap: Record<string, string> = {
+      'formal': 'استخدم نبرة رسمية ومهنية مناسبة للأخبار الجادة',
+      'casual': 'استخدم نبرة ودودة وقريبة من القارئ العادي',
+      'neutral': 'استخدم نبرة متوازنة بين الرسمية والود'
+    };
+    
+    return toneMap[tone] || toneMap['neutral'];
+  }
+
+  /**
+   * تنظيف النص المُعاد صياغته
+   */
+  private cleanRewrittenText(text: string): string {
+    return text
+      .replace(/\*\*/g, '') // إزالة التنسيق الزائد
+      .replace(/#+\s*/g, '') // إزالة عناوين markdown
+      .replace(/^\s*[\-\*]\s*/gm, '') // إزالة نقاط القوائم
+      .replace(/\n{3,}/g, '\n\n') // تقليل الأسطر الفارغة
+      .trim();
+  }
+
+  /**
+   * تحسين النص الأصلي في حالة فشل إعادة الصياغة
+   */
+  private enhanceOriginalText(originalText: string, category: string): string {
+    // إضافة مقدمة بسيطة حسب الفئة
+    const introMap: Record<string, string> = {
+      'سياسة': 'في تطور سياسي مهم،',
+      'اقتصاد': 'على الصعيد الاقتصادي،',
+      'محافظات': 'في إطار أخبار المحافظات،',
+      'ذكاء اصطناعي': 'في عالم التكنولوجيا،',
+      'عسكرية': 'على الصعيد الأمني،',
+      'العالم': 'في التطورات العالمية،',
+      'رياضة': 'في الأوساط الرياضية،'
+    };
+    
+    const intro = introMap[category] || 'في آخر التطورات،';
+    
+    return `${intro} ${originalText}
+
+هذا الخبر مقدم من مصدر بلس لتقديم آخر الأخبار المحدثة للقراء الكرام.`;
+  }
+
+  /**
+   * إنشاء عنوان محسن
+   */
+  public async generateTitle(content: string, category: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      
+      const prompt = `
+اكتب عنواناً جذاباً وقصيراً (أقل من 80 حرف) لهذا الخبر:
+
+الفئة: ${category}
+المحتوى: ${content.substring(0, 300)}
+
+العنوان يجب أن يكون:
+- باللغة العربية
+- جذاب ومثير للاهتمام
+- واضح ومباشر
+- يلخص الخبر بدقة
+- مناسب للقراء المصريين
+
+العنوان فقط:
+`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text().trim().replace(/"/g, '');
+    } catch (error) {
+      console.error('خطأ في إنشاء العنوان:', error);
+      return content.substring(0, 60) + '...';
     }
-
-    return 'أخبار';
   }
 }
 
