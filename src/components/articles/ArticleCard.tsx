@@ -36,6 +36,29 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
     return () => observer.disconnect();
   }, []);
 
+  // تنظيف العنوان من العبارات غير المرغوب فيها
+  const cleanTitle = (title: string): string => {
+    return title
+      // إزالة التواريخ والأوقات
+      .replace(/\d{1,2}‏\/\d{1,2}‏\/\d{2,4}\s*\d{1,2}:\d{1,2}:\d{1,2}\s*(ص|م)/g, '')
+      .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
+      .replace(/\d{1,2}-\d{1,2}-\d{2,4}/g, '')
+      // إزالة المصادر غير المرغوب فيها
+      .replace(/من مصادر RSS/gi, '')
+      .replace(/أخبار عاجلة من مصادر RSS/gi, '')
+      .replace(/منشور جديد من صفحة فيسبوك/gi, '')
+      .replace(/خبر من صفحات فيسبوك/gi, '')
+      .replace(/من مصدر RSS/gi, '')
+      .replace(/عاجل:/gi, '')
+      .replace(/حصري/gi, '')
+      .replace(/Breaking/gi, '')
+      .replace(/\|\s*مصدر\s*بلس/gi, '')
+      // تنظيف عام
+      .replace(/-\s*$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ar-EG', { 
@@ -44,6 +67,8 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
       day: 'numeric'
     });
   };
+
+  const displayTitle = cleanTitle(title);
 
   return (
     <div
@@ -62,7 +87,7 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
         {imgInView && (
           <img
             src={image}
-            alt={title}
+            alt={displayTitle}
             className={`
               w-full h-full object-cover rounded-xl transition-all duration-700
               ${imgLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}
@@ -97,7 +122,7 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
           )}
         </div>
         
-        {source && (
+        {source && source !== 'محرر يدويًا' && (
           <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1">
             <Badge variant="outline" className="bg-white/85 text-gray-700 text-xs flex items-center gap-1 px-2 py-1 shadow">
               <ExternalLink className="w-3 h-3 text-gray-500" /> {source}
@@ -115,7 +140,7 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
             line-clamp-2
           `}>
             <Link to={detailUrl} className="hover:text-news-accent">
-              {title}
+              {displayTitle}
             </Link>
           </h3>
           <p className="mt-3 text-gray-600 leading-relaxed text-base md:text-lg line-clamp-3">{excerpt}</p>

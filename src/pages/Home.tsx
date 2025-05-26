@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
 import { TrendingUp, PieChart, Video, Brain, Shield, Globe } from "lucide-react";
+import { AdSlot } from "../components/ads/AdService";
 
 // Import refactored components
 import Navigation from "../components/home/Navigation";
@@ -125,6 +126,9 @@ const Home = () => {
       {/* Navigation */}
       <Navigation />
 
+      {/* إعلان أعلى الصفحة */}
+      <AdSlot position="header" className="mb-6" />
+
       {/* Breaking News - Only show if there are recent breaking news */}
       {breakingNews.length > 0 && <BreakingNews breakingNews={breakingNews} />}
 
@@ -136,6 +140,9 @@ const Home = () => {
 
       {/* Featured Articles */}
       <FeaturedArticles />
+
+      {/* إعلان بين الأقسام */}
+      <AdSlot position="article" className="my-8" />
 
       {/* Latest News */}
       <LatestNews latestNews={latestNews} />
@@ -161,6 +168,9 @@ const Home = () => {
         {/* Videos */}
         <VideoSection videoArticles={videoArticles} />
       </div>
+
+      {/* إعلان بين الأقسام */}
+      <AdSlot position="article" className="my-8" />
 
       {/* New Categories Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
@@ -188,6 +198,9 @@ const Home = () => {
           linkPath="/world" 
         />
       </div>
+
+      {/* إعلان أسفل الصفحة */}
+      <AdSlot position="footer" className="mt-8" />
     </div>
   );
 };

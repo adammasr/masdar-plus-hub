@@ -1,286 +1,380 @@
-import { useState, useEffect } from "react";
-import { PlusCircle, X, Edit2, Trash2, Eye, EyeOff } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
-import { Ad, AdPosition } from "@/components/ads/types";
-import { mockAds } from "@/data/ads";
 
-const AdPositionLabels: Record<AdPosition, string> = {
-  "header": "أعلى الصفحة",
-  "footer": "أسفل الصفحة",
-  "sidebar": "الشريط الجانبي",
-  "article": "داخل المقالات",
-  "before-content": "قبل المحتوى",
-  "after-content": "بعد المحتوى",
-  "between-featured": "بين المقالات المميزة",
-  "sidebar-top": "أعلى الشريط الجانبي",
-  "sidebar-bottom": "أسفل الشريط الجانبي"
-};
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Trash2, Plus, Save, Eye } from 'lucide-react';
 
-const Ads = () => {
-  const [ads, setAds] = useState<Ad[]>(mockAds);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAd, setEditingAd] = useState<Ad | null>(null);
-  const [currentAd, setCurrentAd] = useState<Ad>({
-    id: "",
-    title: "",
-    imageUrl: "",
-    linkUrl: "",
-    position: "header",
-    isActive: true
+interface AdData {
+  id: string;
+  position: 'header' | 'sidebar' | 'article' | 'footer';
+  type: 'image' | 'text' | 'html';
+  title?: string;
+  description?: string;
+  url?: string;
+  link?: string;
+  buttonText?: string;
+  html?: string;
+  active: boolean;
+}
+
+const AdminAds = () => {
+  const [ads, setAds] = useState<AdData[]>([]);
+  const [newAd, setNewAd] = useState<Partial<AdData>>({
+    position: 'header',
+    type: 'image',
+    active: true
   });
+  const [isEditing, setIsEditing] = useState<string | null>(null);
 
-  // Load ads from localStorage on component mount
+  // تحميل الإعلانات عند بدء التطبيق
   useEffect(() => {
-    const savedAds = localStorage.getItem("masdar_plus_ads");
-    if (savedAds) {
-      try {
-        setAds(JSON.parse(savedAds));
-      } catch (error) {
-        console.error("Error parsing ads from localStorage:", error);
-      }
-    }
+    loadAds();
   }, []);
 
-  // Save ads to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("masdar_plus_ads", JSON.stringify(ads));
-  }, [ads]);
+  const loadAds = () => {
+    try {
+      const savedAds = localStorage.getItem('websiteAds');
+      if (savedAds) {
+        setAds(JSON.parse(savedAds));
+      }
+    } catch (error) {
+      console.error('خطأ في تحميل الإعلانات:', error);
+    }
+  };
 
-  // Create or update ad
-  const handleSaveAd = () => {
-    if (!currentAd.title || !currentAd.position) {
-      toast.error("الرجاء إدخال العنوان والموضع على الأقل");
+  const saveAds = (updatedAds: AdData[]) => {
+    try {
+      localStorage.setItem('websiteAds', JSON.stringify(updatedAds));
+      
+      // تحديث إعلانات الموقع
+      const siteAds: Record<string, any> = {};
+      updatedAds.forEach(ad => {
+        if (ad.active) {
+          siteAds[ad.position] = ad;
+        }
+      });
+      localStorage.setItem('siteAds', JSON.stringify(siteAds));
+      
+      setAds(updatedAds);
+      toast.success('تم حفظ الإعلانات بنجاح');
+    } catch (error) {
+      console.error('خطأ في حفظ الإعلانات:', error);
+      toast.error('فشل في حفظ الإعلانات');
+    }
+  };
+
+  const addAd = () => {
+    if (!newAd.position || !newAd.type) {
+      toast.error('الرجاء اختيار الموضع ونوع الإعلان');
       return;
     }
 
-    if (editingAd) {
-      // Update existing ad
-      setAds(ads.map(ad => (ad.id === editingAd.id ? { ...currentAd, id: editingAd.id } : ad)));
-      toast.success("تم تحديث الإعلان بنجاح");
-    } else {
-      // Create new ad
-      const newAd: Ad = {
-        ...currentAd,
-        id: crypto.randomUUID()
-      };
-      setAds([...ads, newAd]);
-      toast.success("تم إضافة الإعلان بنجاح");
-    }
+    const ad: AdData = {
+      id: Date.now().toString(),
+      position: newAd.position as AdData['position'],
+      type: newAd.type as AdData['type'],
+      title: newAd.title || '',
+      description: newAd.description || '',
+      url: newAd.url || '',
+      link: newAd.link || '',
+      buttonText: newAd.buttonText || '',
+      html: newAd.html || '',
+      active: true
+    };
 
-    setIsModalOpen(false);
-    setEditingAd(null);
-    resetAdForm();
-  };
-
-  // Delete ad
-  const handleDeleteAd = (id: string) => {
-    if (confirm("هل أنت متأكد من حذف هذا الإعلان؟")) {
-      setAds(ads.filter(ad => ad.id !== id));
-      toast.success("تم حذف الإعلان بنجاح");
-    }
-  };
-
-  // Toggle ad status
-  const toggleAdStatus = (id: string) => {
-    setAds(ads.map(ad => 
-      ad.id === id ? { ...ad, isActive: !ad.isActive } : ad
-    ));
-    toast.success("تم تغيير حالة الإعلان بنجاح");
-  };
-
-  // Open modal for editing
-  const openEditModal = (ad: Ad) => {
-    setEditingAd(ad);
-    setCurrentAd({ ...ad });
-    setIsModalOpen(true);
-  };
-
-  // Open modal for creating
-  const openCreateModal = () => {
-    setEditingAd(null);
-    resetAdForm();
-    setIsModalOpen(true);
-  };
-
-  // Reset form values
-  const resetAdForm = () => {
-    setCurrentAd({
-      id: "",
-      title: "",
-      imageUrl: "",
-      linkUrl: "",
-      position: "header" as AdPosition,
-      isActive: true
+    const updatedAds = [...ads, ad];
+    saveAds(updatedAds);
+    
+    // إعادة تعيين النموذج
+    setNewAd({
+      position: 'header',
+      type: 'image',
+      active: true
     });
   };
 
+  const updateAd = (id: string, updates: Partial<AdData>) => {
+    const updatedAds = ads.map(ad => 
+      ad.id === id ? { ...ad, ...updates } : ad
+    );
+    saveAds(updatedAds);
+  };
+
+  const deleteAd = (id: string) => {
+    if (window.confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
+      const updatedAds = ads.filter(ad => ad.id !== id);
+      saveAds(updatedAds);
+    }
+  };
+
+  const toggleAdStatus = (id: string) => {
+    const ad = ads.find(a => a.id === id);
+    if (ad) {
+      updateAd(id, { active: !ad.active });
+    }
+  };
+
+  const getPositionName = (position: string) => {
+    const names = {
+      header: 'أعلى الصفحة',
+      sidebar: 'الشريط الجانبي',
+      article: 'بين الأخبار',
+      footer: 'أسفل الصفحة'
+    };
+    return names[position as keyof typeof names] || position;
+  };
+
+  const renderAdForm = (ad: Partial<AdData>, isNew: boolean = false) => (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg">
+          {isNew ? 'إضافة إعلان جديد' : 'تعديل الإعلان'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">الموضع</label>
+            <Select 
+              value={ad.position} 
+              onValueChange={(value) => 
+                isNew 
+                  ? setNewAd({ ...newAd, position: value as AdData['position'] })
+                  : updateAd(ad.id!, { position: value as AdData['position'] })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر الموضع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="header">أعلى الصفحة</SelectItem>
+                <SelectItem value="sidebar">الشريط الجانبي</SelectItem>
+                <SelectItem value="article">بين الأخبار</SelectItem>
+                <SelectItem value="footer">أسفل الصفحة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">نوع الإعلان</label>
+            <Select 
+              value={ad.type} 
+              onValueChange={(value) => 
+                isNew 
+                  ? setNewAd({ ...newAd, type: value as AdData['type'] })
+                  : updateAd(ad.id!, { type: value as AdData['type'] })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر النوع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="image">صورة</SelectItem>
+                <SelectItem value="text">نص</SelectItem>
+                <SelectItem value="html">HTML مخصص</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">العنوان</label>
+          <Input
+            value={ad.title || ''}
+            onChange={(e) => 
+              isNew 
+                ? setNewAd({ ...newAd, title: e.target.value })
+                : updateAd(ad.id!, { title: e.target.value })
+            }
+            placeholder="عنوان الإعلان"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">الوصف</label>
+          <Textarea
+            value={ad.description || ''}
+            onChange={(e) => 
+              isNew 
+                ? setNewAd({ ...newAd, description: e.target.value })
+                : updateAd(ad.id!, { description: e.target.value })
+            }
+            placeholder="وصف الإعلان"
+            rows={3}
+          />
+        </div>
+
+        {ad.type === 'image' && (
+          <div>
+            <label className="block text-sm font-medium mb-2">رابط الصورة</label>
+            <Input
+              value={ad.url || ''}
+              onChange={(e) => 
+                isNew 
+                  ? setNewAd({ ...newAd, url: e.target.value })
+                  : updateAd(ad.id!, { url: e.target.value })
+              }
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+        )}
+
+        {ad.type === 'html' && (
+          <div>
+            <label className="block text-sm font-medium mb-2">كود HTML</label>
+            <Textarea
+              value={ad.html || ''}
+              onChange={(e) => 
+                isNew 
+                  ? setNewAd({ ...newAd, html: e.target.value })
+                  : updateAd(ad.id!, { html: e.target.value })
+              }
+              placeholder="<div>كود HTML مخصص</div>"
+              rows={5}
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium mb-2">رابط الإعلان</label>
+          <Input
+            value={ad.link || ''}
+            onChange={(e) => 
+              isNew 
+                ? setNewAd({ ...newAd, link: e.target.value })
+                : updateAd(ad.id!, { link: e.target.value })
+            }
+            placeholder="https://example.com"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">نص الزر</label>
+          <Input
+            value={ad.buttonText || ''}
+            onChange={(e) => 
+              isNew 
+                ? setNewAd({ ...newAd, buttonText: e.target.value })
+                : updateAd(ad.id!, { buttonText: e.target.value })
+            }
+            placeholder="اقرأ المزيد"
+          />
+        </div>
+
+        <div className="flex gap-2">
+          {isNew ? (
+            <Button onClick={addAd} className="bg-green-500 hover:bg-green-600">
+              <Plus size={16} className="ml-2" />
+              إضافة الإعلان
+            </Button>
+          ) : (
+            <Button 
+              onClick={() => setIsEditing(null)} 
+              className="bg-blue-500 hover:bg-blue-600"
+            >
+              <Save size={16} className="ml-2" />
+              حفظ التعديلات
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">إدارة الإعلانات</h1>
-        <Button onClick={openCreateModal}>
-          <PlusCircle className="ml-2" /> إضافة إعلان جديد
-        </Button>
+        <div className="text-sm text-gray-500">
+          إجمالي الإعلانات: {ads.length} | النشطة: {ads.filter(ad => ad.active).length}
+        </div>
       </div>
 
-      {ads.length === 0 ? (
-        <Card className="text-center py-12">
-          <CardContent>
-            <p className="text-gray-500 mb-4">لا توجد إعلانات حالياً</p>
-            <Button onClick={openCreateModal}>إضافة إعلان جديد</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ads.map(ad => (
-            <Card key={ad.id} className={`overflow-hidden ${!ad.isActive ? 'opacity-60' : ''}`}>
-              <div className="relative h-40 bg-gray-100">
-                {ad.imageUrl ? (
-                  <img 
-                    src={ad.imageUrl} 
-                    alt={ad.title} 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400">
-                    لا توجد صورة
-                  </div>
-                )}
-              </div>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between">
-                  <CardTitle className="text-lg font-medium">{ad.title}</CardTitle>
+      {/* نموذج إضافة إعلان جديد */}
+      {renderAdForm(newAd, true)}
+
+      {/* قائمة الإعلانات الحالية */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold">الإعلانات الحالية</h2>
+        
+        {ads.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-gray-500">لا توجد إعلانات محفوظة</p>
+            </CardContent>
+          </Card>
+        ) : (
+          ads.map(ad => (
+            <Card key={ad.id} className={`${!ad.active ? 'opacity-50' : ''}`}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
                   <div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 w-8 p-0" 
+                    <CardTitle className="text-lg">{ad.title || 'إعلان بدون عنوان'}</CardTitle>
+                    <p className="text-sm text-gray-500">
+                      {getPositionName(ad.position)} - {ad.type}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={ad.active ? "default" : "outline"}
+                      size="sm"
                       onClick={() => toggleAdStatus(ad.id)}
                     >
-                      {ad.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                      <Eye size={16} />
+                      {ad.active ? 'مفعل' : 'معطل'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditing(isEditing === ad.id ? null : ad.id)}
+                    >
+                      تعديل
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteAd(ad.id)}
+                    >
+                      <Trash2 size={16} />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-col space-y-2">
-                  <div className="text-sm">
-                    <span className="text-gray-500">الموضع: </span>
-                    <span className="font-medium">{AdPositionLabels[ad.position]}</span>
+              
+              {isEditing === ad.id && (
+                <CardContent>
+                  {renderAdForm(ad)}
+                </CardContent>
+              )}
+              
+              {isEditing !== ad.id && (
+                <CardContent>
+                  <div className="space-y-2">
+                    {ad.description && (
+                      <p className="text-gray-700">{ad.description}</p>
+                    )}
+                    {ad.url && (
+                      <p className="text-sm text-blue-600">صورة: {ad.url}</p>
+                    )}
+                    {ad.link && (
+                      <p className="text-sm text-green-600">رابط: {ad.link}</p>
+                    )}
+                    {ad.html && (
+                      <p className="text-sm text-purple-600">HTML مخصص محدد</p>
+                    )}
                   </div>
-                  <div className="text-sm">
-                    <span className="text-gray-500">الحالة: </span>
-                    <span className={`font-medium ${ad.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                      {ad.isActive ? 'نشط' : 'غير نشط'}
-                    </span>
-                  </div>
-                  <div className="flex space-x-2 justify-end pt-2 ml-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => openEditModal(ad)}
-                      className="space-x-1 space-x-reverse"
-                    >
-                      <Edit2 size={16} />
-                      <span>تعديل</span>
-                    </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      onClick={() => handleDeleteAd(ad.id)}
-                      className="space-x-1 space-x-reverse"
-                    >
-                      <Trash2 size={16} />
-                      <span>حذف</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
-          ))}
-        </div>
-      )}
-
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingAd ? 'تحرير الإعلان' : 'إضافة إعلان جديد'}</DialogTitle>
-            <DialogDescription>
-              أدخل تفاصيل الإعلان أدناه
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">عنوان الإعلان</Label>
-              <Input
-                id="title"
-                value={currentAd.title}
-                onChange={(e) => setCurrentAd(prev => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">رابط الصورة</Label>
-              <Input
-                id="imageUrl"
-                value={currentAd.imageUrl || ''}
-                onChange={(e) => setCurrentAd(prev => ({ ...prev, imageUrl: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="linkUrl">رابط الإعلان</Label>
-              <Input
-                id="linkUrl"
-                value={currentAd.linkUrl || ''}
-                onChange={(e) => setCurrentAd(prev => ({ ...prev, linkUrl: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="position">موضع الإعلان</Label>
-              <select
-                id="position"
-                value={currentAd.position}
-                onChange={(e) => setCurrentAd(prev => ({ ...prev, position: e.target.value as AdPosition }))}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {Object.entries(AdPositionLabels).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <Switch 
-                id="isActive" 
-                checked={currentAd.isActive}
-                onCheckedChange={(checked) => setCurrentAd(prev => ({ ...prev, isActive: checked }))}
-              />
-              <Label htmlFor="isActive" className="mr-2">الإعلان نشط</Label>
-            </div>
-            
-            <div className="flex justify-end space-x-2 space-x-reverse pt-4">
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                إلغاء
-              </Button>
-              <Button onClick={handleSaveAd}>
-                {editingAd ? 'تحديث' : 'إضافة'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          ))
+        )}
+      </div>
     </div>
   );
 };
 
-export default Ads;
+export default AdminAds;

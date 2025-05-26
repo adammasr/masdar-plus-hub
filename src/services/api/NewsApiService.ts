@@ -1,42 +1,18 @@
 
 import axios from 'axios';
 import { NewsItem } from '../../types/NewsItem';
-
-interface NewsApiResponse {
-  status: string;
-  totalResults: number;
-  articles: any[];
-}
-
-interface NewsDataResponse {
-  status: string;
-  totalResults: number;
-  results: any[];
-}
+import { getContextualImage } from '../../utils/imageExtractor';
 
 /**
- * خدمة جلب الأخبار من NewsAPI و NewsData.io
+ * خدمة NewsAPI و NewsData.io محسنة
  */
 export class NewsApiService {
   private static instance: NewsApiService | null = null;
   
   // مفاتيح API
-  private readonly newsApiKey = '3b081dbd20914fa593eadcce3b88dac3';
-  private readonly newsDataApiKey = 'pub_ae32bb142b1249c5975f2dcfe75a4ed9';
+  private newsApiKey = '3b081dbd20914fa593eadcce3b88dac3';
+  private newsDataApiKey = 'pub_ae32bb142b1249c5975f2dcfe75a4ed9';
   
-  // URLs لـ NewsData.io المخصصة
-  private readonly newsDataUrls = [
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A7%D9%84%D9%85%D9%86%D9%88%D9%81%D9%8A%D8%A9',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A7%D9%84%D8%AD%D9%83%D9%88%D9%85%D8%A9%20%D9%88%D8%A7%D9%84%D9%88%D8%B2%D8%A7%D8%B1%D8%A7%D8%AA%20%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%8A%D8%A9',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A7%D9%84%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A7%D9%84%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D8%B9%D8%B3%D9%83%D8%B1%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B9%D8%B1%D8%A8%D9%8A%D8%A9',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D8%B0%D9%83%D8%A7%D8%A1%20%D8%A7%D9%84%D8%A7%D8%B5%D8%B7%D9%86%D8%A7%D8%B9%D9%8A',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6%D8%A9',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D9%85%D8%B5%D8%B1&timezone=Africa/Cairo',
-    'https://newsdata.io/api/1/latest?apikey=pub_ae32bb142b1249c5975f2dcfe75a4ed9&q=%D8%A7%D9%84%D8%B0%D9%83%D8%A7%D8%A1%20%D8%A7%D9%84%D8%A7%D8%B5%D8%B7%D9%86%D8%A7%D8%B9%D9%8A&timezone=Africa/Cairo'
-  ];
-
   private constructor() {}
 
   public static getInstance(): NewsApiService {
@@ -47,24 +23,25 @@ export class NewsApiService {
   }
 
   /**
-   * جلب الأخبار من جميع المصادر
+   * جلب جميع الأخبار من المصادر المختلفة
    */
   public async fetchAllNews(): Promise<NewsItem[]> {
     try {
-      console.log('🔄 جلب الأخبار من NewsAPI و NewsData.io...');
+      console.log('🚀 بدء جلب الأخبار من NewsAPI و NewsData...');
       
       const allNews: NewsItem[] = [];
       
       // جلب من NewsAPI
-      const newsApiItems = await this.fetchFromNewsAPI();
-      allNews.push(...newsApiItems);
+      const newsApiResults = await this.fetchFromNewsAPI();
+      allNews.push(...newsApiResults);
       
-      // جلب من NewsData.io
-      const newsDataItems = await this.fetchFromNewsData();
-      allNews.push(...newsDataItems);
+      // جلب من NewsData بفئات مختلفة
+      const newsDataResults = await this.fetchFromNewsData();
+      allNews.push(...newsDataResults);
       
-      console.log(`✅ تم جلب ${allNews.length} خبر من مصادر الأخبار`);
+      console.log(`✅ تم جلب ${allNews.length} خبر من جميع المصادر`);
       return allNews;
+      
     } catch (error) {
       console.error('خطأ في جلب الأخبار:', error);
       return [];
@@ -75,177 +52,249 @@ export class NewsApiService {
    * جلب الأخبار من NewsAPI
    */
   private async fetchFromNewsAPI(): Promise<NewsItem[]> {
-    try {
-      const keywords = ['مصر', 'القاهرة', 'الحكومة المصرية', 'المنوفية', 'الإسكندرية', 'محافظات'];
-      const sources = 'al-ahram-eg,youm7,masrawy';
-      
-      const response = await axios.get<NewsApiResponse>('https://newsapi.org/v2/everything', {
-        params: {
-          apiKey: this.newsApiKey,
-          q: keywords.join(' OR '),
-          sources: sources,
-          language: 'ar',
-          sortBy: 'publishedAt',
-          pageSize: 20
-        },
-        timeout: 10000
-      });
-
-      if (response.data.status !== 'ok') {
-        throw new Error('فشل في جلب الأخبار من NewsAPI');
+    const sources = [
+      'al-ahram-com-eg',
+      'masrawy-com',
+      'youm7-com'
+    ];
+    
+    const keywords = ['مصر', 'القاهرة', 'الحكومة المصرية', 'المنوفية'];
+    const results: NewsItem[] = [];
+    
+    for (const keyword of keywords) {
+      try {
+        const response = await axios.get('https://newsapi.org/v2/everything', {
+          params: {
+            q: keyword,
+            language: 'ar',
+            sortBy: 'publishedAt',
+            pageSize: 10,
+            apiKey: this.newsApiKey
+          },
+          timeout: 10000
+        });
+        
+        if (response.data.articles) {
+          const processedArticles = response.data.articles.map(article => 
+            this.processNewsApiArticle(article, keyword)
+          );
+          results.push(...processedArticles);
+        }
+        
+        // تأخير قصير بين الطلبات
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        console.warn(`فشل في جلب أخبار ${keyword} من NewsAPI:`, error);
       }
-
-      return response.data.articles.map((article, index) => this.convertNewsApiToNewsItem(article, index));
-    } catch (error) {
-      console.error('خطأ في جلب أخبار NewsAPI:', error);
-      return [];
     }
+    
+    return results;
   }
 
   /**
    * جلب الأخبار من NewsData.io
    */
   private async fetchFromNewsData(): Promise<NewsItem[]> {
-    try {
-      const allNews: NewsItem[] = [];
-      
-      for (const url of this.newsDataUrls) {
-        try {
-          const response = await axios.get<NewsDataResponse>(url, {
-            timeout: 10000
-          });
-          
-          if (response.data.status === 'success' && response.data.results) {
-            const convertedNews = response.data.results.map((article, index) => 
-              this.convertNewsDataToNewsItem(article, index, url)
-            );
-            allNews.push(...convertedNews);
-          }
-        } catch (error) {
-          console.warn(`تخطي URL: ${url}`, error.message);
+    const categories = [
+      { q: 'المنوفية', category: 'محافظات' },
+      { q: 'الحكومة والوزارات المصرية', category: 'سياسة' },
+      { q: 'الأخبار العربية', category: 'أخبار' },
+      { q: 'الأخبار العسكرية العربية', category: 'عسكرية' },
+      { q: 'أخبار الذكاء الاصطناعي', category: 'ذكاء اصطناعي' },
+      { q: 'أخبار الرياضة', category: 'رياضة' },
+      { q: 'أخبار الاقتصاد', category: 'اقتصاد' },
+      { q: 'أخبار مصر', category: 'أخبار' }
+    ];
+    
+    const results: NewsItem[] = [];
+    
+    for (const { q, category } of categories) {
+      try {
+        const response = await axios.get('https://newsdata.io/api/1/latest', {
+          params: {
+            apikey: this.newsDataApiKey,
+            q: q,
+            language: 'ar',
+            timezone: 'Africa/Cairo',
+            size: 10
+          },
+          timeout: 10000
+        });
+        
+        if (response.data.results) {
+          const processedArticles = response.data.results.map(article => 
+            this.processNewsDataArticle(article, category)
+          );
+          results.push(...processedArticles);
         }
+        
+        // تأخير قصير بين الطلبات
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+      } catch (error) {
+        console.warn(`فشل في جلب أخبار ${q} من NewsData:`, error);
       }
-      
-      return allNews;
-    } catch (error) {
-      console.error('خطأ في جلب أخبار NewsData.io:', error);
-      return [];
     }
+    
+    return results;
   }
 
   /**
-   * تحويل مقال NewsAPI إلى NewsItem
+   * معالجة مقال من NewsAPI
    */
-  private convertNewsApiToNewsItem(article: any, index: number): NewsItem {
-    const category = this.categorizeContent(article.title + ' ' + (article.description || ''));
+  private processNewsApiArticle(article: any, keyword: string): NewsItem {
+    // تنظيف العنوان من التواريخ والمصادر غير المرغوب فيها
+    const cleanTitle = this.cleanTitle(article.title || 'خبر جديد');
+    
+    // استخراج أو توليد صورة مناسبة
+    const image = this.getArticleImage(article.urlToImage, article.content, keyword);
+    
+    // تحديد الفئة بناءً على المحتوى
+    const category = this.determineCategory(cleanTitle + ' ' + (article.description || ''), keyword);
     
     return {
-      id: `newsapi-${Date.now()}-${index}`,
-      title: this.cleanText(article.title || 'بدون عنوان'),
-      content: this.cleanText(article.content || article.description || ''),
+      id: this.generateId(),
+      title: cleanTitle,
+      content: article.content || article.description || 'محتوى الخبر غير متوفر',
       excerpt: this.createExcerpt(article.description || article.content || ''),
+      image: image,
       category: category,
-      date: article.publishedAt || new Date().toISOString(),
-      source: article.source?.name || 'NewsAPI',
-      image: article.urlToImage || this.getDefaultImage(category),
-      featured: index === 0 && Math.random() > 0.7,
-      originalLink: article.url,
-      isTranslated: false
+      date: new Date().toISOString().split('T')[0],
+      source: 'NewsAPI',
+      featured: Math.random() < 0.1, // 10% احتمال أن يكون مميز
+      isTranslated: false,
+      readingTime: this.calculateReadingTime(article.content || article.description || ''),
+      tags: this.generateTags(cleanTitle, category)
     };
   }
 
   /**
-   * تحويل مقال NewsData.io إلى NewsItem
+   * معالجة مقال من NewsData
    */
-  private convertNewsDataToNewsItem(article: any, index: number, sourceUrl: string): NewsItem {
-    const category = this.categorizeFromUrl(sourceUrl) || this.categorizeContent(article.title + ' ' + (article.description || ''));
+  private processNewsDataArticle(article: any, category: string): NewsItem {
+    // تنظيف العنوان
+    const cleanTitle = this.cleanTitle(article.title || 'خبر جديد');
+    
+    // استخراج أو توليد صورة مناسبة
+    const image = this.getArticleImage(article.image_url, article.content, category);
     
     return {
-      id: `newsdata-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
-      title: this.cleanText(article.title || 'بدون عنوان'),
-      content: this.cleanText(article.content || article.description || ''),
+      id: this.generateId(),
+      title: cleanTitle,
+      content: article.content || article.description || 'محتوى الخبر غير متوفر',
       excerpt: this.createExcerpt(article.description || article.content || ''),
+      image: image,
       category: category,
-      date: article.pubDate || new Date().toISOString(),
-      source: article.source_id || 'NewsData',
-      image: article.image_url || this.getDefaultImage(category),
-      featured: index === 0 && Math.random() > 0.6,
-      originalLink: article.link,
-      isTranslated: false
+      date: new Date().toISOString().split('T')[0],
+      source: 'NewsData',
+      featured: Math.random() < 0.15, // 15% احتمال أن يكون مميز
+      isTranslated: false,
+      readingTime: this.calculateReadingTime(article.content || article.description || ''),
+      tags: this.generateTags(cleanTitle, category)
     };
   }
 
   /**
-   * تصنيف المحتوى حسب URL المصدر
+   * تنظيف العنوان من التواريخ والمصادر غير المرغوب فيها
    */
-  private categorizeFromUrl(url: string): string | null {
-    if (url.includes('%D8%A7%D9%84%D9%85%D9%86%D9%88%D9%81%D9%8A%D8%A9')) return 'محافظات';
-    if (url.includes('%D8%A7%D9%84%D8%AD%D9%83%D9%88%D9%85%D8%A9')) return 'سياسة';
-    if (url.includes('%D8%A7%D9%84%D8%B9%D8%B3%D9%83%D8%B1%D9%8A%D8%A9')) return 'عسكرية';
-    if (url.includes('%D8%A7%D9%84%D8%B0%D9%83%D8%A7%D8%A1%20%D8%A7%D9%84%D8%A7%D8%B5%D8%B7%D9%86%D8%A7%D8%B9%D9%8A')) return 'ذكاء اصطناعي';
-    if (url.includes('%D8%A7%D9%84%D8%B1%D9%8A%D8%A7%D8%B6%D8%A9')) return 'رياضة';
-    if (url.includes('%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF')) return 'اقتصاد';
-    if (url.includes('%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1%20%D9%85%D8%B5%D8%B1')) return 'أخبار';
-    return null;
+  private cleanTitle(title: string): string {
+    return title
+      // إزالة التواريخ والأوقات
+      .replace(/\d{1,2}‏\/\d{1,2}‏\/\d{2,4}\s*\d{1,2}:\d{1,2}:\d{1,2}\s*(ص|م)/g, '')
+      .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
+      .replace(/\d{1,2}-\d{1,2}-\d{2,4}/g, '')
+      // إزالة المصادر غير المرغوب فيها
+      .replace(/من مصادر RSS/gi, '')
+      .replace(/أخبار عاجلة من مصادر RSS/gi, '')
+      .replace(/منشور جديد من صفحة فيسبوك/gi, '')
+      .replace(/خبر من صفحات فيسبوك/gi, '')
+      .replace(/من مصدر RSS/gi, '')
+      .replace(/عاجل:/gi, '')
+      .replace(/حصري/gi, '')
+      .replace(/Breaking/gi, '')
+      .replace(/\|\s*مصدر\s*بلس/gi, '')
+      // تنظيف عام
+      .replace(/-\s*$/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /**
-   * تصنيف المحتوى تلقائياً
+   * الحصول على صورة مناسبة للمقال
    */
-  private categorizeContent(text: string): string {
-    const lowerText = text.toLowerCase();
+  private getArticleImage(originalImage: string | null, content: string, category: string): string {
+    // إذا كانت هناك صورة أصلية صالحة
+    if (originalImage && this.isValidImageUrl(originalImage)) {
+      return originalImage;
+    }
     
-    if (lowerText.includes('ذكاء اصطناعي') || lowerText.includes('ai') || lowerText.includes('تكنولوجيا')) {
+    // استخدام صورة سياقية بناءً على الفئة والمحتوى
+    return getContextualImage(content + ' ' + category);
+  }
+
+  /**
+   * التحقق من صحة رابط الصورة
+   */
+  private isValidImageUrl(url: string): boolean {
+    if (!url || typeof url !== 'string') return false;
+    
+    // تحقق من صيغة URL صحيحة
+    try {
+      new URL(url);
+    } catch {
+      return false;
+    }
+    
+    // تحقق من امتداد الصورة
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const urlLower = url.toLowerCase();
+    
+    return imageExtensions.some(ext => urlLower.includes(ext)) || 
+           urlLower.includes('image') || 
+           urlLower.includes('photo');
+  }
+
+  /**
+   * تحديد فئة المقال
+   */
+  private determineCategory(content: string, keyword: string): string {
+    const lowerContent = content.toLowerCase();
+    const lowerKeyword = keyword.toLowerCase();
+    
+    if (lowerKeyword.includes('ذكاء اصطناعي') || lowerContent.includes('ذكاء اصطناعي') || lowerContent.includes('ai')) {
       return 'ذكاء اصطناعي';
     }
-    if (lowerText.includes('سياس') || lowerText.includes('حكوم') || lowerText.includes('رئيس') || lowerText.includes('وزير')) {
-      return 'سياسة';
-    }
-    if (lowerText.includes('اقتصاد') || lowerText.includes('مال') || lowerText.includes('بنك') || lowerText.includes('استثمار')) {
-      return 'اقتصاد';
-    }
-    if (lowerText.includes('عسكري') || lowerText.includes('جيش') || lowerText.includes('دفاع') || lowerText.includes('أمن')) {
-      return 'عسكرية';
-    }
-    if (lowerText.includes('محافظ') || lowerText.includes('منوفية') || lowerText.includes('إسكندرية') || lowerText.includes('محافظة')) {
-      return 'محافظات';
-    }
-    if (lowerText.includes('رياض') || lowerText.includes('كرة') || lowerText.includes('مباراة') || lowerText.includes('فريق')) {
+    if (lowerKeyword.includes('رياضة') || lowerContent.includes('رياضة') || lowerContent.includes('كرة')) {
       return 'رياضة';
     }
-    if (lowerText.includes('دولي') || lowerText.includes('عالم') || lowerText.includes('أمريكا') || lowerText.includes('أوروبا')) {
-      return 'العالم';
+    if (lowerKeyword.includes('اقتصاد') || lowerContent.includes('اقتصاد') || lowerContent.includes('استثمار')) {
+      return 'اقتصاد';
+    }
+    if (lowerKeyword.includes('عسكري') || lowerContent.includes('جيش') || lowerContent.includes('عسكري')) {
+      return 'عسكرية';
+    }
+    if (lowerKeyword.includes('محافظ') || lowerContent.includes('محافظة') || lowerContent.includes('المنوفية')) {
+      return 'محافظات';
+    }
+    if (lowerContent.includes('حكومة') || lowerContent.includes('وزير') || lowerContent.includes('رئيس')) {
+      return 'سياسة';
     }
     
     return 'أخبار';
   }
 
   /**
-   * تنظيف النص
-   */
-  private cleanText(text: string): string {
-    if (!text) return '';
-    
-    return text
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#x27;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  /**
    * إنشاء مقتطف
    */
-  private createExcerpt(text: string, maxLength: number = 150): string {
-    const cleanText = this.cleanText(text);
-    if (cleanText.length <= maxLength) return cleanText;
+  private createExcerpt(content: string, maxLength: number = 150): string {
+    if (!content) return 'مقتطف غير متوفر';
     
-    let truncated = cleanText.substring(0, maxLength);
+    const cleanContent = content.replace(/<[^>]*>/g, '').trim();
+    
+    if (cleanContent.length <= maxLength) return cleanContent;
+    
+    let truncated = cleanContent.substring(0, maxLength);
     const lastSpace = truncated.lastIndexOf(' ');
     
     if (lastSpace > maxLength * 0.7) {
@@ -256,20 +305,36 @@ export class NewsApiService {
   }
 
   /**
-   * الحصول على صورة افتراضية حسب الفئة
+   * حساب وقت القراءة
    */
-  private getDefaultImage(category: string): string {
-    const imageMap: Record<string, string> = {
-      'سياسة': 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&auto=format&fit=crop&q=60',
-      'اقتصاد': 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&auto=format&fit=crop&q=60',
-      'محافظات': 'https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=800&auto=format&fit=crop&q=60',
-      'ذكاء اصطناعي': 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60',
-      'عسكرية': 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=60',
-      'العالم': 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&auto=format&fit=crop&q=60',
-      'رياضة': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=60'
-    };
+  private calculateReadingTime(content: string): number {
+    if (!content) return 1;
     
-    return imageMap[category] || 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60';
+    const wordsPerMinute = 200;
+    const wordCount = content.split(/\s+/).length;
+    return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
+  }
+
+  /**
+   * إنشاء تاجات
+   */
+  private generateTags(title: string, category: string): string[] {
+    const tags = [category];
+    const titleLower = title.toLowerCase();
+    
+    if (titleLower.includes('مصر')) tags.push('مصر');
+    if (titleLower.includes('القاهرة')) tags.push('القاهرة');
+    if (titleLower.includes('حكومة')) tags.push('حكومة');
+    if (titleLower.includes('رئيس')) tags.push('رئاسة');
+    
+    return [...new Set(tags)].slice(0, 5);
+  }
+
+  /**
+   * توليد ID فريد
+   */
+  private generateId(): string {
+    return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
   }
 }
 

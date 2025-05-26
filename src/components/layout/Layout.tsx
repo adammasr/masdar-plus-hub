@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import AdminSidebar from "./AdminSidebar";
-import SidebarAd from "../SidebarAd";
+import { SidebarAd } from "../ads/AdService";
 
 export interface LayoutProps {
   isAdmin?: boolean;
