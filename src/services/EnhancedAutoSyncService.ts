@@ -354,6 +354,32 @@ export class EnhancedAutoSyncService {
     this.stopAutoSync();
     EnhancedAutoSyncService.instance = null;
   }
+
+  /**
+   * Clears all stored articles from localStorage and resets relevant service state.
+   */
+  public clearAllArticles(): void {
+    try {
+      localStorage.removeItem('articles');
+      localStorage.removeItem('lastAutoSync'); // Also clear the last sync time
+      
+      this.isFirstRun = true; // Reset to behave like an initial run on next sync
+      
+      // Optionally, immediately clear articles in any listening UI components.
+      // This can be done by dispatching an event that ArticleContext or UI listens to.
+      // For example, signaling that the articles list is now empty.
+      window.dispatchEvent(new CustomEvent('articlesUpdated', {
+        detail: { newCount: 0, cleared: true } // Signal that articles were cleared
+      }));
+
+      console.log("All stored articles and last sync time have been cleared from localStorage. EnhancedAutoSyncService state reset.");
+      toast.success("تم حذف جميع المقالات المخزنة بنجاح!");
+
+    } catch (error) {
+      console.error("Error clearing articles from localStorage:", error);
+      toast.error("فشل في حذف المقالات المخزنة.");
+    }
+  }
 }
 
 export default EnhancedAutoSyncService;

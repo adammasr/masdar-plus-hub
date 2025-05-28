@@ -159,26 +159,38 @@ export class EnhancedNewsService {
   private async processNewsItem(item: NewsItem): Promise<NewsItem> {
     try {
       // إعادة صياغة المحتوى
-      const rewrittenContent = await this.geminiService.rewriteContent({
-        originalText: item.content,
+      // First, clean the original content in case AI processing fails or is skipped
+      const cleanedOriginalContent = this.removeUnwantedPhrases(item.content);
+      const cleanedOriginalTitle = this.removeUnwantedPhrases(item.title);
+
+      // إعادة صياغة المحتوى
+      const aiResponse = await this.geminiService.rewriteContent({
+        originalText: cleanedOriginalContent, // Use cleaned content for AI processing
         category: item.category,
         source: item.source,
         tone: 'neutral'
       });
       
-      // إنشاء عنوان محسن
-      const enhancedTitle = await this.geminiService.generateTitle(rewrittenContent, item.category);
+      // Clean the AI-generated title and content
+      const finalTitle = this.removeUnwantedPhrases(aiResponse.title);
+      const finalContent = this.removeUnwantedPhrases(aiResponse.content);
       
-      // إنشاء مقتطف جديد
-      const newExcerpt = this.createExcerpt(rewrittenContent);
+      // إنشاء عنوان محسن (this call seems redundant if aiResponse.title is already the enhanced title)
+      // For now, let's assume aiResponse.title is the primary title from Gemini.
+      // If a separate generateTitle call is still desired, its input and output should also be cleaned.
+      // const enhancedTitleGemini = await this.geminiService.generateTitle(finalContent, item.category);
+      // const finalEnhancedTitle = this.removeUnwantedPhrases(enhancedTitleGemini);
+
+      // إنشاء مقتطف جديد من المحتوى النهائي النظيف
+      const newExcerpt = this.createExcerpt(finalContent);
       
       return {
         ...item,
-        title: enhancedTitle || item.title,
-        content: rewrittenContent,
-        excerpt: newExcerpt,
+        title: finalTitle || cleanedOriginalTitle, // Use cleaned AI title or cleaned original
+        content: finalContent,
+        excerpt: newExcerpt, // newExcerpt is already cleaned by createExcerpt
         isTranslated: false,
-        readingTime: this.calculateReadingTime(rewrittenContent),
+        readingTime: this.calculateReadingTime(finalContent),
         tags: this.generateTags(rewrittenContent, item.category)
       };
     } catch (error) {
@@ -191,13 +203,32 @@ export class EnhancedNewsService {
    * تحسين الخبر بدون ذكاء اصطناعي
    */
   private enhanceNewsItem(item: NewsItem): NewsItem {
+    const cleanedTitle = this.removeUnwantedPhrases(item.title);
+    const cleanedContent = this.removeUnwantedPhrases(item.content);
+    
+    const enhancedContent = this.enhanceContent(cleanedContent, item.category); // uses cleaned content
+    const finalEnhancedContent = this.removeUnwantedPhrases(enhancedContent); // clean enhanced content
+    
+    const excerpt = this.createExcerpt(finalEnhancedContent); // uses cleaned and enhanced content
+    const finalExcerpt = this.removeUnwantedPhrases(excerpt);
+
     return {
       ...item,
-      content: this.enhanceContent(item.content, item.category),
-      excerpt: this.createExcerpt(item.content),
-      readingTime: this.calculateReadingTime(item.content),
-      tags: this.generateTags(item.content, item.category)
+      title: cleanedTitle,
+      content: finalEnhancedContent,
+      excerpt: finalExcerpt, // finalExcerpt is already cleaned by createExcerpt
+      readingTime: this.calculateReadingTime(finalEnhancedContent),
+      tags: this.generateTags(finalEnhancedContent, item.category)
     };
+  }
+
+  /**
+   * Helper method to remove unwanted phrases from text.
+   */
+  private removeUnwantedPhrases(text: string): string {
+    if (!text) return "";
+    // Replace the specific phrase, case-insensitive and globally, then trim whitespace.
+    return text.replace(/ONLY AVAILABLE IN PAID PLANS/gi, '').trim();
   }
 
   /**
@@ -207,7 +238,8 @@ export class EnhancedNewsService {
     const intro = this.getCategoryIntro(category);
     const conclusion = this.getCategoryConclusion(category);
     
-    return `${intro} ${content}\n\n${conclusion}`;
+    // Content is already cleaned before being passed here, but the result can be cleaned again if needed.
+    return `${intro} ${this.removeUnwantedPhrases(content)}\n\n${conclusion}`;
   }
 
   /**
@@ -238,11 +270,12 @@ export class EnhancedNewsService {
    * إنشاء مقتطف
    */
   private createExcerpt(content: string, maxLength: number = 150): string {
-    const cleanContent = content.replace(/<[^>]*>?/gm, '').trim();
+    // Ensure content is clean before creating excerpt
+    const cleanedContent = this.removeUnwantedPhrases(content.replace(/<[^>]*>?/gm, '').trim());
     
-    if (cleanContent.length <= maxLength) return cleanContent;
+    if (cleanedContent.length <= maxLength) return cleanedContent;
     
-    let truncated = cleanContent.substring(0, maxLength);
+    let truncated = cleanedContent.substring(0, maxLength);
     const lastSpace = truncated.lastIndexOf(' ');
     
     if (lastSpace > maxLength * 0.7) {
