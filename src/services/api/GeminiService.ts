@@ -8,6 +8,11 @@ export interface RewriteRequest {
   tone?: 'formal' | 'casual' | 'neutral';
 }
 
+export interface RewriteResponse {
+  title: string;
+  content: string;
+}
+
 /**
  * خدمة Gemini AI المحسنة لإعادة صياغة الأخبار
  */
@@ -113,17 +118,69 @@ export class GeminiService {
   /**
    * إعادة صياغة المحتوى بطريقة احترافية
    */
-  public async rewriteContent(request: RewriteRequest): Promise<string> {
+  public async rewriteContent(request: RewriteRequest): Promise<RewriteResponse> {
     try {
       const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
       
       const prompt = this.buildRewritePrompt(request);
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const rewrittenText = response.text();
+      const rawText = response.text();
       
-      // تنظيف النص المُعاد صياغته
-      return this.cleanRewrittenText(rewrittenText);
+      let title = '';
+      let content = '';
+
+      // Enhanced parsing for "Title: [title]\nContent: [content]"
+      // Allows for case-insensitivity and optional whitespace.
+      // Matches "Title:" at the beginning of the string, captures the title,
+      // then matches "Content:" after a newline, capturing the rest.
+      const structuredMatch = rawText.match(/^Title:\s*(.*?)\s*\nContent:\s*(.*)/is);
+
+      if (structuredMatch && structuredMatch[1] && structuredMatch[2]) {
+        title = structuredMatch[1].trim();
+        content = structuredMatch[2].trim();
+        console.log("Successfully parsed structured response.");
+      } else {
+        // Fallback parsing if the strict structure is not perfectly matched
+        // This attempts to find Title: and Content: markers even if not perfectly positioned
+        console.warn('Strict parsing failed, attempting flexible fallback parsing.');
+        const titleMatchFallback = rawText.match(/Title:\s*(.*?)(?:\nContent:|$)/is);
+        const contentMatchFallback = rawText.match(/Content:\s*(.*)/is);
+
+        if (titleMatchFallback && titleMatchFallback[1]) {
+          title = titleMatchFallback[1].trim();
+        }
+
+        if (contentMatchFallback && contentMatchFallback[1]) {
+          content = contentMatchFallback[1].trim();
+        }
+        
+        // Further fallback if parsing still fails to get both title and content
+        if (!title && !content) {
+          console.warn('Flexible fallback parsing also failed. Using raw text for content and generic title.');
+          const firstLine = rawText.split('\n')[0];
+          if (rawText.includes('\n') && firstLine.length < 150) { // Use first line as title if reasonable and content exists
+              title = firstLine;
+              content = rawText.substring(rawText.indexOf('\n') + 1).trim();
+          } else { // Otherwise, use generic title and full raw text as content
+              title = "خبر معالج بواسطة Gemini"; 
+              content = rawText;
+          }
+        } else if (!title && content) {
+          // If only content is found, generate a placeholder title
+          title = content.substring(0, Math.min(content.length, 70)) + (content.length > 70 ? "..." : "");
+          console.warn('Only content was parsed, title generated from content.');
+        } else if (title && !content) {
+          // If only title is found, this is unusual. Use placeholder for content.
+          content = "محتوى الخبر غير متوفر حالياً أو حدث خطأ في المعالجة.";
+          console.warn('Only title was parsed, using placeholder for content.');
+        }
+      }
+      
+      return {
+        title: this.cleanRewrittenText(title),
+        content: this.cleanRewrittenText(content)
+      };
     } catch (error) {
       console.error('خطأ في إعادة الصياغة:', error);
       // في حالة الفشل، إرجاع نص محسن بدلاً من النص الأصلي
@@ -144,7 +201,6 @@ export class GeminiService {
 المتطلبات:
 - اكتب بالعربية الفصحى
 - حافظ على جميع الحقائق والأرقام الأصلية
-- اجعل العنوان جذاباً ومناسباً للقراء المصريين
 - ${categoryContext}
 - ${toneInstructions}
 - اكتب مقدمة قوية تجذب القارئ
@@ -158,7 +214,12 @@ export class GeminiService {
 المصدر: ${request.source}
 الفئة: ${request.category}
 
-أعد صياغة هذا الخبر بطريقة احترافية، مع الحفاظ على المعلومات الأساسية وجعله أكثر جاذبية للقراء:
+أعد صياغة هذا الخبر بالكامل. يجب أن يكون الرد بالتنسيق التالي حصراً وبشكل صارم، مع الحفاظ على كافة المتطلبات أعلاه.
+لا تضف أي نص قبل "Title:" ولا أي نص بين العنوان و "Content:".
+
+التنسيق المطلوب:
+Title: [اكتب هنا عنواناً مباشراً وصريحاً وجذاباً للخبر باللغة العربية، على سبيل المثال: "خلال اجتماعه مع وزير الاتصالات.. الرئيس السيسي يتابع مستجدات مبادرة «الرواد الرقميون»"]
+Content: [اكتب هنا محتوى الخبر المعاد صياغته بشكل كامل ومفصل ومنظم في فقرات، مع مقدمة قوية وسياق مصري مناسب. تأكد من أن المحتوى يتبع مباشرة بعد "Content:"]
 `;
   }
 
@@ -207,7 +268,7 @@ export class GeminiService {
   /**
    * تحسين النص الأصلي في حالة فشل إعادة الصياغة
    */
-  private enhanceOriginalText(originalText: string, category: string): string {
+  private enhanceOriginalText(originalText: string, category: string): RewriteResponse {
     // إضافة مقدمة بسيطة حسب الفئة
     const introMap: Record<string, string> = {
       'سياسة': 'في تطور سياسي مهم،',
@@ -220,10 +281,23 @@ export class GeminiService {
     };
     
     const intro = introMap[category] || 'في آخر التطورات،';
-    
-    return `${intro} ${originalText}
+    const enhancedContent = `${intro} ${originalText}
 
 هذا الخبر مقدم من مصدر بلس لتقديم آخر الأخبار المحدثة للقراء الكرام.`;
+
+    // Generate a simple title from the first sentence or a truncated version of the original text
+    let title = originalText.split('.')[0]; // Get first sentence
+    if (title.length > 70) { // Truncate if too long
+      title = title.substring(0, 67) + "...";
+    }
+    if (!title) {
+        title = "خبر عاجل"; // Default title if original text is empty or has no sentence
+    }
+    
+    return {
+        title: this.cleanRewrittenText(title),
+        content: this.cleanRewrittenText(enhancedContent)
+    };
   }
 
   /**

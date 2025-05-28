@@ -83,6 +83,9 @@ export class FacebookService {
    * جلب المنشورات من جميع صفحات فيسبوك المكونة
    */
   public async fetchAllPages(): Promise<NewsItem[]> {
+    console.log("FacebookService is currently disabled and will not fetch any data.");
+    return Promise.resolve([]); 
+    // The original logic below is now unreachable.
     try {
       console.log('🔄 جلب المنشورات من صفحات فيسبوك...');
       
@@ -130,23 +133,20 @@ export class FacebookService {
         // تصنيف المحتوى
         const category = await this.geminiService.classifyContent(content);
         
-        // إعادة صياغة المحتوى
-        const rewrittenContent = await this.geminiService.rewriteContent({
+        // إعادة صياغة المحتوى والحصول على العنوان والمحتوى
+        const aiResponse = await this.geminiService.rewriteContent({
           originalText: content,
           category: category,
           source: pageName,
           tone: 'formal'
         });
         
-        // إنشاء عنوان من المحتوى المعاد صياغته
-        const title = this.generateTitleFromContent(rewrittenContent);
-        
         // إنشاء عنصر الخبر
         const newsItem: NewsItem = {
           id: `fb-${Date.now()}-${i}-${this.hashString(pageName)}`,
-          title: title,
-          content: rewrittenContent,
-          excerpt: this.createExcerpt(rewrittenContent),
+          title: aiResponse.title, // استخدام العنوان من Gemini
+          content: aiResponse.content, // استخدام المحتوى من Gemini
+          excerpt: this.createExcerpt(aiResponse.content), // استخدام المحتوى من Gemini للمقتطف
           category: category,
           date: new Date().toISOString().split('T')[0],
           source: pageName,

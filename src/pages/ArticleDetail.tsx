@@ -64,19 +64,30 @@ const ArticleDetail = () => {
   // تحسين مشاركة المقال
   const handleShare = async (platform?: string) => {
     const url = window.location.href;
+
+    // It's crucial to check if 'article' exists, especially if the context might not have it for a given ID.
+    if (!article) {
+      // Inform the user that article details might be loading or unavailable, and sharing will use defaults.
+      toast.info("تفاصيل المقال غير متوفرة حالياً. ستتم المشاركة بالمعلومات الأساسية.");
+      // Depending on product decision, one might choose to 'return;' here to prevent sharing.
+      // For now, we allow sharing with default information.
+    }
+
     const title = article?.title || "مقال من مصدر بلس";
-    
+    // Provide a slightly more engaging default excerpt if article.excerpt is not available
+    const excerpt = article?.excerpt || "اكتشف هذا المقال المثير للاهتمام على مصدر بلس!"; 
+
     try {
       switch(platform) {
         case "facebook":
           const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(title)}`;
-          window.open(fbUrl, "_blank", "width=600,height=400");
+          window.open(fbUrl, "_blank", "noopener,noreferrer,width=600,height=400");
           toast.success("تم فتح فيسبوك للمشاركة");
           break;
           
         case "twitter":
           const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}&via=MasdarPlus`;
-          window.open(twitterUrl, "_blank", "width=600,height=400");
+          window.open(twitterUrl, "_blank", "noopener,noreferrer,width=600,height=400");
           toast.success("تم فتح تويتر للمشاركة");
           break;
           
@@ -85,22 +96,28 @@ const ArticleDetail = () => {
           toast.success("تم نسخ رابط المقال!");
           break;
           
-        default:
+        default: // Native share or fallback
           if (navigator.share) {
             await navigator.share({ 
               title, 
               url,
-              text: article?.excerpt || "اقرأ هذا المقال من مصدر بلس"
+              text: excerpt 
             });
-            toast.success("تم مشاركة المقال");
+            toast.success("تمت مشاركة المقال بنجاح");
           } else {
+            // Fallback for browsers that don't support navigator.share (e.g., desktop Firefox)
             await navigator.clipboard.writeText(url);
-            toast.success("تم نسخ رابط المقال!");
+            toast.info("تم نسخ رابط المقال (المشاركة المباشرة غير مدعومة من متصفحك).");
           }
       }
     } catch (error) {
       console.error("خطأ في المشاركة:", error);
-      toast.error("فشل في المشاركة، يرجى المحاولة مرة أخرى");
+      // Handle user cancellation of the share operation gracefully
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        toast.info("تم إلغاء عملية المشاركة.");
+      } else {
+        toast.error("فشلت عملية المشاركة. يرجى المحاولة مرة أخرى.");
+      }
     }
   };
   
@@ -144,6 +161,11 @@ const ArticleDetail = () => {
   useEffect(() => {
     if (article) {
       document.title = `${article.title} | مصدر بلس`;
+      // For optimal social sharing, especially with Facebook, ensure that Open Graph (OG) meta tags are dynamically updated.
+      // Specifically, `og:url` should reflect the canonical URL of this article page (`window.location.href`).
+      // Other important OG tags include `og:title`, `og:description`, and `og:image`.
+      // This is typically handled by a library like React Helmet or Next.js Head component in a higher-order component or layout.
+      // Example: <meta property="og:url" content={window.location.href} />
     }
     return () => {
       document.title = "مصدر بلس";
@@ -235,7 +257,7 @@ const ArticleDetail = () => {
         <div className="relative">
           <div className="w-full h-[300px] sm:h-[400px] md:h-[450px] relative">
             <img
-              src={article.image || LOGO_SRC}
+              src={article.image || undefined} // Changed LOGO_SRC to undefined
               alt={article.title}
               className="w-full h-full object-cover"
               loading="lazy"
