@@ -26,10 +26,15 @@ export class EnhancedAutoSyncService {
   
   // الخدمات المستخدمة
   private enhancedNewsService: EnhancedNewsService;
+  private readonly ONE_TIME_ARTICLES_CLEARED_FLAG = 'articles_cleared_flag_v_initial_cleanup_202407';
+
 
   private constructor() {
     // تهيئة خدمة الأخبار المحسنة
     this.enhancedNewsService = EnhancedNewsService.getInstance();
+
+    // تنفيذ مسح المقالات لمرة واحدة إذا لم يتم ذلك من قبل لهذا الإصدار
+    this.performOneTimeArticleClear();
     
     // تحميل التكوين من التخزين المحلي أو استخدام الافتراضي
     const savedConfig = localStorage.getItem('autoSyncConfig');
@@ -353,6 +358,28 @@ export class EnhancedAutoSyncService {
   public destroy(): void {
     this.stopAutoSync();
     EnhancedAutoSyncService.instance = null;
+  }
+
+  /**
+   * Performs the one-time article clear if the flag is not set.
+   */
+  private performOneTimeArticleClear(): void {
+    try {
+      if (localStorage.getItem(this.ONE_TIME_ARTICLES_CLEARED_FLAG) !== 'true') {
+        console.log(`Attempting automatic one-time article clear using flag: ${this.ONE_TIME_ARTICLES_CLEARED_FLAG}`);
+        this.clearAllArticles(); // This method already contains console logs and toasts
+        localStorage.setItem(this.ONE_TIME_ARTICLES_CLEARED_FLAG, 'true');
+        console.log("Automatic one-time article clear executed and flag set.");
+        // Toast for one-time clear can be part of clearAllArticles or here if specific wording is needed.
+        // The clearAllArticles already shows "تم حذف جميع المقالات المخزنة بنجاح!"
+      } else {
+        console.log(`One-time article clear flag '${this.ONE_TIME_ARTICLES_CLEARED_FLAG}' is set. Skipping clear.`);
+      }
+    } catch (error) {
+      // This catch is for errors related to localStorage access for the flag itself.
+      console.error("Error during one-time article clear check:", error);
+      toast.error("فشل في عملية التحقق من مسح المقالات لمرة واحدة.");
+    }
   }
 
   /**
