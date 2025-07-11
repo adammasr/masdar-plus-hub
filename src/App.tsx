@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
@@ -13,6 +12,12 @@ import World from "./pages/World";
 import Videos from "./pages/Videos";
 import Governorates from "./pages/Governorates";
 import Sports from "./pages/Sports";
+import Technology from "./pages/Technology";
+import Cars from "./pages/Cars";
+import Art from "./pages/Art";
+import Science from "./pages/Science";
+import Education from "./pages/Education";
+import Accidents from "./pages/Accidents";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
@@ -23,6 +28,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import AdminArticles from "./pages/admin/Articles";
 import AdminNewArticle from "./pages/admin/NewArticle";
 import AdminAds from "./pages/admin/Ads";
+import AdminDashboard from "./pages/AdminDashboard";
 import RssFeedManager from "./components/admin/RssFeedManager";
 import { ArticleProvider } from "./context/ArticleContext";
 import useEnhancedAutoSync from "./hooks/useEnhancedAutoSync";
@@ -51,11 +57,20 @@ function App() {
               <Route path="videos" element={<Videos />} />
               <Route path="governorates" element={<Governorates />} />
               <Route path="sports" element={<Sports />} />
+              <Route path="technology" element={<Technology />} />
+              <Route path="cars" element={<Cars />} />
+              <Route path="art" element={<Art />} />
+              <Route path="science" element={<Science />} />
+              <Route path="education" element={<Education />} />
+              <Route path="accidents" element={<Accidents />} />
               <Route path="contact" element={<Contact />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="terms" element={<Terms />} />
               <Route path="search" element={<SearchResults />} />
             </Route>
+
+            {/* Enhanced Admin Dashboard */}
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
