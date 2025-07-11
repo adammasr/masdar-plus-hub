@@ -125,8 +125,7 @@ export class RssService {
       // استخدام عدة خدمات proxy كبديل في حالة فشل إحداها
       const proxyServices = [
         `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
-        `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`,
-        `https://cors-anywhere.herokuapp.com/${feedUrl}`
+        `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`
       ];
       
       let response;
