@@ -1,6 +1,6 @@
-import { NewsItem } from '../types/NewsItem';
-import { EnhancedNewsService } from './api/EnhancedNewsService';
-import { toast } from 'sonner';
+import { NewsItem } from "../types/NewsItem";
+import { EnhancedNewsService } from "./api/EnhancedNewsService";
+import { toast } from "sonner";
 
 // واجهة لتكوين خدمة المزامنة
 export interface SyncConfig {
@@ -23,17 +23,17 @@ export class EnhancedAutoSyncService {
   private syncInterval: NodeJS.Timeout | null = null;
   private isFirstRun: boolean = true;
   private isSyncing: boolean = false;
-  
+
   // الخدمات المستخدمة
   private enhancedNewsService: EnhancedNewsService;
 
   private constructor() {
     // تهيئة خدمة الأخبار المحسنة
     this.enhancedNewsService = EnhancedNewsService.getInstance();
-    
+
     // تحميل التكوين من التخزين المحلي أو استخدام الافتراضي
-    const savedConfig = localStorage.getItem('autoSyncConfig');
-    
+    const savedConfig = localStorage.getItem("autoSyncConfig");
+
     if (savedConfig) {
       try {
         this.config = JSON.parse(savedConfig);
@@ -43,7 +43,7 @@ export class EnhancedAutoSyncService {
     } else {
       this.config = this.getDefaultConfig();
     }
-    
+
     // بدء المزامنة التلقائية
     this.startAutoSync();
   }
@@ -68,8 +68,8 @@ export class EnhancedAutoSyncService {
       maxArticles: 1000, // حد أقصى 1000 مقال
       sources: {
         newsApi: true,
-        rss: true
-      }
+        rss: true,
+      },
     };
   }
 
@@ -77,7 +77,7 @@ export class EnhancedAutoSyncService {
    * حفظ التكوين في التخزين المحلي
    */
   private saveConfig(): void {
-    localStorage.setItem('autoSyncConfig', JSON.stringify(this.config));
+    localStorage.setItem("autoSyncConfig", JSON.stringify(this.config));
   }
 
   /**
@@ -94,53 +94,55 @@ export class EnhancedAutoSyncService {
    */
   private async syncFromSources(): Promise<void> {
     if (this.isSyncing) {
-      console.log('⏳ المزامنة قيد التنفيذ بالفعل...');
+      console.log("⏳ المزامنة قيد التنفيذ بالفعل...");
       return;
     }
 
     this.isSyncing = true;
-    
+
     try {
-      console.log('🔄 بدء المزامنة التلقائية المحسنة...');
-      
+      console.log("🔄 بدء المزامنة التلقائية المحسنة...");
+
       // جلب ومعالجة الأخبار من جميع المصادر
       const processedNews = await this.enhancedNewsService.fetchAndProcessAllNews();
-      
+
       // إضافة الأخبار الجديدة
       let newArticlesCount = 0;
       if (processedNews.length > 0) {
         newArticlesCount = this.addNewArticles(processedNews);
       }
-      
+
       // تنظيف المقالات القديمة
       this.cleanOldArticles();
-      
+
       // إرسال حدث للإشعار بالتحديث
-      window.dispatchEvent(new CustomEvent('articlesUpdated', {
-        detail: { newCount: newArticlesCount }
-      }));
-      
+      window.dispatchEvent(
+        new CustomEvent("articlesUpdated", {
+          detail: { newCount: newArticlesCount },
+        })
+      );
+
       // عرض إشعار للمستخدم
       if (newArticlesCount > 0) {
         toast.success(`✅ تم إضافة ${newArticlesCount} خبر جديد محسن بالذكاء الاصطناعي`, {
-          description: `آخر تحديث: ${new Date().toLocaleTimeString('ar-EG')}`,
-          duration: 6000
+          description: `آخر تحديث: ${new Date().toLocaleTimeString("ar-EG")}`,
+          duration: 6000,
         });
         console.log(`✅ تم إضافة ${newArticlesCount} خبر جديد إلى الموقع`);
       } else if (!this.isFirstRun) {
-        toast.info('🔍 تم فحص المصادر - لا توجد أخبار جديدة', {
-          description: `آخر فحص: ${new Date().toLocaleTimeString('ar-EG')}`,
-          duration: 3000
+        toast.info("🔍 تم فحص المصادر - لا توجد أخبار جديدة", {
+          description: `آخر فحص: ${new Date().toLocaleTimeString("ar-EG")}`,
+          duration: 3000,
         });
       }
-      
+
       // حفظ آخر وقت مزامنة
-      localStorage.setItem('lastAutoSync', new Date().toISOString());
-      
+      localStorage.setItem("lastAutoSync", new Date().toISOString());
+
       this.isFirstRun = false;
     } catch (error) {
-      console.error('خطأ في المزامنة التلقائية:', error);
-      toast.error('فشل في تحديث الأخبار تلقائياً');
+      console.error("خطأ في المزامنة التلقائية:", error);
+      toast.error("فشل في تحديث الأخبار تلقائياً");
     } finally {
       this.isSyncing = false;
     }
@@ -150,33 +152,36 @@ export class EnhancedAutoSyncService {
    * إضافة الأخبار الجديدة إلى التخزين المحلي
    */
   private addNewArticles(newArticles: NewsItem[]): number {
-    const existingArticles = JSON.parse(localStorage.getItem('articles') || '[]');
-    
-    // تصفية الأخبار المكررة بناءً على التشابه المتقدم
-    const uniqueNewArticles = newArticles.filter(newArticle => 
-      !existingArticles.some((existing: any) => 
-        this.isSimilarArticle(existing, newArticle)
-      )
+    const existingArticles = JSON.parse(
+      localStorage.getItem("articles") || "[]"
     );
-    
+
+    // تصفية الأخبار المكررة بناءً على التشابه المتقدم
+    const uniqueNewArticles = newArticles.filter(
+      (newArticle) =>
+        !existingArticles.some((existing: any) =>
+          this.isSimilarArticle(existing, newArticle)
+        )
+    );
+
     if (uniqueNewArticles.length > 0) {
       // ترتيب الأخبار حسب التاريخ (الأحدث أولاً)
-      const sortedNewArticles = uniqueNewArticles.sort((a, b) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+      const sortedNewArticles = uniqueNewArticles.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
-      
+
       // دمج الأخبار الجديدة مع الموجودة
       const updatedArticles = [...sortedNewArticles, ...existingArticles];
-      
+
       // تطبيق الحد الأقصى للمقالات
       const limitedArticles = updatedArticles.slice(0, this.config.maxArticles);
-      
+
       // حفظ الأخبار المحدثة
-      localStorage.setItem('articles', JSON.stringify(limitedArticles));
-      
+      localStorage.setItem("articles", JSON.stringify(limitedArticles));
+
       console.log(`✅ تم إضافة ${uniqueNewArticles.length} مقال جديد`);
     }
-    
+
     return uniqueNewArticles.length;
   }
 
@@ -185,35 +190,38 @@ export class EnhancedAutoSyncService {
    */
   private isSimilarArticle(existing: any, newArticle: NewsItem): boolean {
     // مقارنة العناوين
-    const titleSimilarity = this.calculateSimilarity(existing.title, newArticle.title);
+    const titleSimilarity = this.calculateSimilarity(
+      existing.title,
+      newArticle.title
+    );
     if (titleSimilarity > 0.8) return true;
-    
+
     // مقارنة الروابط الأصلية إذا وجدت
     if (existing.originalLink && newArticle.originalLink) {
       return existing.originalLink === newArticle.originalLink;
     }
-    
+
     // مقارنة المحتوى للمقالات القصيرة
     if (existing.content && newArticle.content) {
       const contentSimilarity = this.calculateSimilarity(
-        existing.content.substring(0, 200), 
+        existing.content.substring(0, 200),
         newArticle.content.substring(0, 200)
       );
       if (contentSimilarity > 0.85) return true;
     }
-    
+
     // مقارنة المصدر والتاريخ
     if (existing.source === newArticle.source) {
       const existingDate = new Date(existing.date).getTime();
       const newDate = new Date(newArticle.date).getTime();
       const timeDiff = Math.abs(existingDate - newDate);
-      
+
       // إذا كانا من نفس المصدر وفي نفس اليوم تقريباً
       if (timeDiff < 24 * 60 * 60 * 1000) { // أقل من 24 ساعة
         return titleSimilarity > 0.6;
       }
     }
-    
+
     return false;
   }
 
@@ -222,27 +230,28 @@ export class EnhancedAutoSyncService {
    */
   private calculateSimilarity(text1: string, text2: string): number {
     if (!text1 || !text2) return 0;
-    
-    const normalize = (str: string) => str
-      .toLowerCase()
-      .replace(/[^\u0600-\u06FF\s]/g, '') // الاحتفاظ بالعربية والمسافات فقط
-      .replace(/\s+/g, ' ')
-      .trim();
-    
+
+    const normalize = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^\u0600-\u06FF\s]/g, "") // الاحتفاظ بالعربية والمسافات فقط
+        .replace(/\s+/g, " ")
+        .trim();
+
     const norm1 = normalize(text1);
     const norm2 = normalize(text2);
-    
+
     if (norm1 === norm2) return 1;
-    
+
     // حساب التشابه بناءً على الكلمات المشتركة
-    const words1 = norm1.split(/\s+/).filter(word => word.length > 2);
-    const words2 = norm2.split(/\s+/).filter(word => word.length > 2);
-    
+    const words1 = norm1.split(/\s+/).filter((word) => word.length > 2);
+    const words2 = norm2.split(/\s+/).filter((word) => word.length > 2);
+
     if (words1.length === 0 || words2.length === 0) return 0;
-    
-    const commonWords = words1.filter(word => words2.includes(word));
+
+    const commonWords = words1.filter((word) => words2.includes(word));
     const totalWords = Math.max(words1.length, words2.length);
-    
+
     return commonWords.length / totalWords;
   }
 
@@ -251,22 +260,23 @@ export class EnhancedAutoSyncService {
    */
   private cleanOldArticles(): void {
     try {
-      const articles = JSON.parse(localStorage.getItem('articles') || '[]');
-      
+      const articles = JSON.parse(localStorage.getItem("articles") || "[]");
+
       if (articles.length > this.config.maxArticles) {
         // ترتيب حسب التاريخ والاحتفاظ بالأحدث
-        const sortedArticles = articles.sort((a: any, b: any) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
+        const sortedArticles = articles.sort(
+          (a: any, b: any) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
         );
-        
+
         const cleanedArticles = sortedArticles.slice(0, this.config.maxArticles);
-        localStorage.setItem('articles', JSON.stringify(cleanedArticles));
-        
+        localStorage.setItem("articles", JSON.stringify(cleanedArticles));
+
         const removedCount = articles.length - cleanedArticles.length;
         console.log(`🧹 تم حذف ${removedCount} مقال قديم`);
       }
     } catch (error) {
-      console.error('خطأ في تنظيف المقالات القديمة:', error);
+      console.error("خطأ في تنظيف المقالات القديمة:", error);
     }
   }
 
@@ -275,15 +285,15 @@ export class EnhancedAutoSyncService {
    */
   private startAutoSync(): void {
     if (!this.config.enabled) return;
-    
+
     // تنفيذ أول مزامنة بعد 10 ثوان من بدء التطبيق
     setTimeout(() => this.syncFromSources(), 10000);
-    
+
     // إعداد المزامنة الدورية
     this.syncInterval = setInterval(() => {
       this.syncFromSources();
     }, this.config.interval * 60 * 1000);
-    
+
     console.log(`⏰ تم تفعيل المزامنة التلقائية كل ${this.config.interval} دقيقة`);
   }
 
@@ -294,7 +304,7 @@ export class EnhancedAutoSyncService {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log('⏹️ تم إيقاف المزامنة التلقائية');
+      console.log("⏹️ تم إيقاف المزامنة التلقائية");
     }
   }
 
@@ -318,32 +328,37 @@ export class EnhancedAutoSyncService {
    */
   public manualSync(): void {
     if (this.isSyncing) {
-      toast.info('المزامنة قيد التنفيذ بالفعل...');
+      toast.info("المزامنة قيد التنفيذ بالفعل...");
       return;
     }
-    
-    toast.info('بدء المزامنة اليدوية المحسنة...');
+
+    toast.info("بدء المزامنة اليدوية المحسنة...");
     this.syncFromSources();
   }
 
   /**
    * الحصول على حالة المزامنة
    */
-  public getSyncStatus(): { isEnabled: boolean; isSyncing: boolean; nextSync: string; lastSync: string } {
-    const lastSync = localStorage.getItem('lastAutoSync');
-    const lastSyncFormatted = lastSync ? 
-      new Date(lastSync).toLocaleString('ar-EG') : 
-      'لم يتم بعد';
-    
-    const nextSyncTime = this.syncInterval ? 
-      new Date(Date.now() + this.config.interval * 60 * 1000).toLocaleTimeString('ar-EG') : 
-      'غير محدد';
-    
+  public getSyncStatus(): {
+    isEnabled: boolean;
+    isSyncing: boolean;
+    nextSync: string;
+    lastSync: string;
+  } {
+    const lastSync = localStorage.getItem("lastAutoSync");
+    const lastSyncFormatted = lastSync
+      ? new Date(lastSync).toLocaleString("ar-EG")
+      : "لم يتم بعد";
+
+    const nextSyncTime = this.syncInterval
+      ? new Date(Date.now() + this.config.interval * 60 * 1000).toLocaleTimeString("ar-EG")
+      : "غير محدد";
+
     return {
       isEnabled: this.config.enabled,
       isSyncing: this.isSyncing,
       nextSync: nextSyncTime,
-      lastSync: lastSyncFormatted
+      lastSync: lastSyncFormatted,
     };
   }
 
@@ -353,6 +368,83 @@ export class EnhancedAutoSyncService {
   public destroy(): void {
     this.stopAutoSync();
     EnhancedAutoSyncService.instance = null;
+  }
+
+  /**
+   * مزامنة الأخبار العاجلة فقط
+   */
+  public async syncPriorityNews(): Promise<void> {
+    console.log("🔥 بدء مزامنة الأخبار العاجلة...");
+
+    try {
+      // سحب من مصادر الأخبار العاجلة فقط
+      const prioritySources = this.enhancedNewsService.getRssService().getRssSources().slice(0, 5); // أول 5 مصادر
+      const articles = await this.enhancedNewsService.getRssService().fetchFromMultipleSources(prioritySources);
+
+      if (articles.length > 0) {
+        console.log(`📰 تم العثور على ${articles.length} خبر عاجل`);
+
+        // معالجة الأخبار العاجلة بأولوية عالية
+        const processedArticles = await Promise.all(
+          articles.slice(0, 10).map((article) => this.enhancedNewsService.processArticle(article))
+        );
+
+        // إضافة الأخبار المعالجة
+        processedArticles.forEach((article) => {
+          if (article) {
+            this.addNewArticles([article]); // استخدام addNewArticles لإضافة الأخبار
+          }
+        });
+
+        console.log("✅ تم تحديث الأخبار العاجلة بنجاح");
+      }
+    } catch (error) {
+      console.error("❌ خطأ في مزامنة الأخبار العاجلة:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * مزامنة احتياطية شاملة
+   */
+  public async backupSync(): Promise<void> {
+    console.log("💾 بدء المزامنة الاحتياطية...");
+
+    try {
+      // تنظيف الأخبار القديمة أولاً
+      this.cleanOldArticles();
+
+      // مزامنة شاملة من جميع المصادر
+      await this.manualSync();
+
+      // تحديث الإحصائيات
+      this.updateStatistics();
+
+      console.log("✅ تم إكمال المزامنة الاحتياطية بنجاح");
+    } catch (error) {
+      console.error("❌ خطأ في المزامنة الاحتياطية:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * تحديث الإحصائيات
+   */
+  private updateStatistics(): void {
+    const articles = JSON.parse(localStorage.getItem("articles") || "[]");
+    const stats = {
+      totalArticles: articles.length,
+      categoriesCount: new Set(articles.map((a: NewsItem) => a.category)).size,
+      lastUpdate: new Date().toISOString(),
+      sourcesCount: new Set(articles.map((a: NewsItem) => a.source)).size,
+    };
+
+    console.log("📊 إحصائيات الموقع:", stats);
+
+    // حفظ الإحصائيات في localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("site_statistics", JSON.stringify(stats));
+    }
   }
 }
 
