@@ -1,9 +1,10 @@
-import { useArticles } from "../context/ArticleContext";
+import { useArticles } from "../../context/ArticleContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import WebhookSetup from "../../components/admin/WebhookSetup";
 import FacebookSection from "../../components/admin/facebook/FacebookSection";
 import AutoSyncStatus from "../../components/admin/AutoSyncStatus";
+import ImprovedAdminLayout from "../../components/admin/ImprovedAdminLayout";
 import { Link } from "react-router-dom";
 import { 
   FileText, 
@@ -15,7 +16,10 @@ import {
   Globe,
   PlusCircle,
   Settings,
-  BarChart3
+  BarChart3,
+  Activity,
+  Users,
+  Calendar
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -66,14 +70,18 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">لوحة التحكم</h1>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Clock size={16} />
-          آخر تحديث: {new Date().toLocaleTimeString('ar-EG')}
+    <ImprovedAdminLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">مرحباً بك في لوحة التحكم</h1>
+            <p className="text-gray-600 mt-1">إدارة شاملة لموقع المصدر بلس</p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 bg-white p-3 rounded-lg shadow-sm">
+            <Clock size={16} />
+            آخر تحديث: {new Date().toLocaleTimeString('ar-EG')}
+          </div>
         </div>
-      </div>
       
       {/* الإحصائيات الرئيسية */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -244,7 +252,8 @@ const Dashboard = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </ImprovedAdminLayout>
   );
 };
 

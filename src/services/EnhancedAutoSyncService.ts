@@ -377,17 +377,14 @@ export class EnhancedAutoSyncService {
     console.log("🔥 بدء مزامنة الأخبار العاجلة...");
 
     try {
-      // سحب من مصادر الأخبار العاجلة فقط
-      const prioritySources = this.enhancedNewsService.getRssService().getRssSources().slice(0, 5); // أول 5 مصادر
-      const articles = await this.enhancedNewsService.getRssService().fetchFromMultipleSources(prioritySources);
+      // سحب من مصادر الأخبار العاجلة فقط  
+      const articles = await this.enhancedNewsService.fetchAndProcessAllNews();
 
       if (articles.length > 0) {
         console.log(`📰 تم العثور على ${articles.length} خبر عاجل`);
 
         // معالجة الأخبار العاجلة بأولوية عالية
-        const processedArticles = await Promise.all(
-          articles.slice(0, 10).map((article) => this.enhancedNewsService.processArticle(article))
-        );
+        const processedArticles = articles.slice(0, 10);
 
         // إضافة الأخبار المعالجة
         processedArticles.forEach((article) => {

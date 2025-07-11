@@ -70,12 +70,12 @@ const AdminSidebar = () => {
         />
       )}
 
-      {/* الشريط الجانبي */}
+      {/* الشريط الجانبي المحسن */}
       <aside
         className={`
-          fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 shadow-lg
+          fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 shadow-xl
           transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-16' : 'w-64'}
+          ${isCollapsed ? 'w-16' : 'w-72'}
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           flex flex-col overflow-hidden
         `}
@@ -155,17 +155,22 @@ const AdminSidebar = () => {
         </div>
       </aside>
 
-      {/* محتوى الصفحة مع هامش للشريط الجانبي */}
+      {/* محتوى الصفحة مع هامش للشريط الجانبي المحسن */}
       <div 
         className={`
           transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}
+          ${isCollapsed ? 'md:ml-16' : 'md:ml-72'}
           min-h-screen bg-gray-50
         `}
       >
-        {/* شريط علوي إضافي للوحة التحكم */}
-        <div className="bg-white border-b border-gray-200 p-4 md:hidden">
-          <h1 className="text-xl font-bold text-news-accent">لوحة التحكم</h1>
+        {/* شريط علوي محسن للوحة التحكم */}
+        <div className="bg-gradient-to-r from-news-accent to-red-700 text-white p-4 shadow-md">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">لوحة التحكم - المصدر بلس</h1>
+            <div className="text-sm opacity-90">
+              نظام إدارة المحتوى
+            </div>
+          </div>
         </div>
       </div>
     </>

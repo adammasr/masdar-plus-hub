@@ -28,7 +28,6 @@ import Dashboard from "./pages/admin/Dashboard";
 import AdminArticles from "./pages/admin/Articles";
 import AdminNewArticle from "./pages/admin/NewArticle";
 import AdminAds from "./pages/admin/Ads";
-import AdminDashboard from "./pages/AdminDashboard"; // هذا هو السطر الذي تم تصحيحه
 import RssFeedManager from "./components/admin/RssFeedManager";
 import { ArticleProvider } from "./context/ArticleContext";
 import useEnhancedAutoSync from "./hooks/useEnhancedAutoSync";
@@ -69,8 +68,6 @@ function App() {
               <Route path="search" element={<SearchResults />} />
             </Route>
 
-            {/* Enhanced Admin Dashboard */}
-            <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />

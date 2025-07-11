@@ -2,66 +2,131 @@
 import { useState, useMemo, useEffect } from "react";
 import { useArticles } from "../context/ArticleContext";
 import ArticleGrid from "../components/articles/ArticleGrid";
-import { MapPin, Filter, Search } from "lucide-react";
+import { MapPin, Filter, Search, TrendingUp, AlertCircle } from "lucide-react";
 import { egyptianGovernorates } from "../data/governoratesData";
 import { AdSlot } from "../components/ads/AdService";
+import { categorizeArticle, improveImageExtraction } from "../utils/smartCategorization";
 
 const Governorates = () => {
   const { articles } = useArticles();
   const [selectedGovernorate, setSelectedGovernorate] = useState<string>("الكل");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // تحسين آلية تصنيف أخبار المحافظات
+  // نظام تصنيف ذكي محسن لأخبار المحافظات
   const categorizeArticleByGovernorate = (article: any): string | null => {
     const title = article.title.toLowerCase();
     const content = article.content.toLowerCase();
-    const fullText = `${title} ${content}`;
+    const excerpt = article.excerpt?.toLowerCase() || '';
+    const fullText = `${title} ${content} ${excerpt}`;
     
-    // البحث عن أسماء المحافظات في المحتوى
+    // التحقق من الكلمات المحظورة أولاً
+    const forbiddenKeywords = [
+      'only available in paid plans',
+      'upgrade to premium', 
+      'subscription required',
+      'إعلان',
+      'اشترك الآن'
+    ];
+    
+    if (forbiddenKeywords.some(keyword => fullText.includes(keyword))) {
+      return null; // تجاهل المقالات الإعلانية
+    }
+    
+    // البحث المحسن عن أسماء المحافظات
     for (const gov of egyptianGovernorates) {
       const govLower = gov.toLowerCase();
-      if (fullText.includes(govLower) || 
-          fullText.includes(`محافظة ${govLower}`) ||
-          fullText.includes(`محافظ ${govLower}`)) {
+      // نقاط قوة مختلفة للتطابقات
+      const directMatch = fullText.includes(govLower);
+      const officialMatch = fullText.includes(`محافظة ${govLower}`) || fullText.includes(`محافظ ${govLower}`);
+      
+      if (directMatch || officialMatch) {
         return gov;
       }
     }
     
-    // كلمات مفتاحية للمحافظات المختلفة
+    // كلمات مفتاحية محسنة ومتوسعة للمحافظات
     const governorateKeywords: Record<string, string[]> = {
-      'القاهرة': ['العاصمة', 'القاهرة', 'وسط البلد', 'مصر الجديدة', 'المعادي', 'حلوان'],
-      'الإسكندرية': ['الإسكندرية', 'الثغر', 'المتوسط', 'بحري'],
-      'الجيزة': ['الجيزة', 'الأهرام', 'الهرم', 'فيصل', '6 أكتوبر'],
-      'الشرقية': ['الزقازيق', 'الشرقية', 'بلبيس', 'فاقوس'],
-      'المنوفية': ['شبين الكوم', 'المنوفية', 'منوف', 'السادات'],
-      'القليوبية': ['بنها', 'القليوبية', 'شبرا الخيمة', 'القناطر'],
-      'أسوان': ['أسوان', 'النوبة', 'إدفو', 'كوم أمبو'],
-      'الأقصر': ['الأقصر', 'الكرنك', 'الدير البحري', 'وادي الملوك']
+      'القاهرة': ['العاصمة', 'القاهرة', 'وسط البلد', 'مصر الجديدة', 'المعادي', 'حلوان', 'النزهة', 'مدينة نصر', 'التجمع الخامس'],
+      'الإسكندرية': ['الإسكندرية', 'الثغر', 'المتوسط', 'بحري', 'العجمي', 'المنتزه', 'سيدي بشر'],
+      'الجيزة': ['الجيزة', 'الأهرام', 'الهرم', 'فيصل', '6 أكتوبر', 'الشيخ زايد', 'المهندسين', 'العجوزة'],
+      'الشرقية': ['الزقازيق', 'الشرقية', 'بلبيس', 'فاقوس', 'ديرب نجم', 'أبو حماد'],
+      'المنوفية': ['شبين الكوم', 'المنوفية', 'منوف', 'السادات', 'تلا', 'أشمون'],
+      'القليوبية': ['بنها', 'القليوبية', 'شبرا الخيمة', 'القناطر', 'طوخ', 'كفر شكر'],
+      'أسوان': ['أسوان', 'النوبة', 'إدفو', 'كوم أمبو', 'دراو', 'أبو سمبل'],
+      'الأقصر': ['الأقصر', 'الكرنك', 'الدير البحري', 'وادي الملوك', 'إسنا', 'الطود'],
+      'البحر الأحمر': ['الغردقة', 'سفاجا', 'مرسى علم', 'رأس غارب', 'القصير'],
+      'جنوب سيناء': ['شرم الشيخ', 'دهب', 'نويبع', 'طابا', 'كاترين'],
+      'شمال سيناء': ['العريش', 'رفح', 'الشيخ زويد', 'بئر العبد'],
+      'مطروح': ['مرسى مطروح', 'السلوم', 'سيوة', 'الضبعة'],
+      'الوادي الجديد': ['الخارجة', 'الداخلة', 'الفرافرة', 'باريس'],
+      'البحيرة': ['دمنهور', 'رشيد', 'إدكو', 'كفر الدوار'],
+      'كفر الشيخ': ['كفر الشيخ', 'دسوق', 'فوه', 'بلطيم'],
+      'الدقهلية': ['المنصورة', 'طلخا', 'ميت غمر', 'أجا'],
+      'الغربية': ['طنطا', 'المحلة الكبرى', 'زفتى', 'السنطة'],
+      'دمياط': ['دمياط', 'رأس البر', 'فارسكور', 'الزرقا'],
+      'بورسعيد': ['بورسعيد', 'بورفؤاد'],
+      'الإسماعيلية': ['الإسماعيلية', 'التل الكبير', 'فايد', 'القنطرة'],
+      'السويس': ['السويس', 'الأربعين', 'عتاقة'],
+      'المنيا': ['المنيا', 'ملوي', 'سمالوط', 'بني مزار'],
+      'أسيوط': ['أسيوط', 'ديروط', 'منفلوط', 'أبنوب'],
+      'سوهاج': ['سوهاج', 'أخميم', 'البلينا', 'المراغة'],
+      'قنا': ['قنا', 'نجع حمادي', 'دشنا', 'فرشوط'],
+      'بني سويف': ['بني سويف', 'الواسطى', 'ناصر', 'ببا'],
+      'الفيوم': ['الفيوم', 'سنورس', 'إطسا', 'طامية']
     };
     
+    // البحث بنظام نقاط للحصول على أفضل تطابق
+    let bestMatch = { governorate: null as string | null, score: 0 };
+    
     for (const [gov, keywords] of Object.entries(governorateKeywords)) {
-      if (keywords.some(keyword => fullText.includes(keyword.toLowerCase()))) {
-        return gov;
+      let score = 0;
+      for (const keyword of keywords) {
+        const keywordLower = keyword.toLowerCase();
+        const matches = (fullText.match(new RegExp(keywordLower, 'g')) || []).length;
+        score += matches;
+        
+        // نقاط إضافية إذا كانت الكلمة في العنوان
+        if (title.includes(keywordLower)) {
+          score += 2;
+        }
+      }
+      
+      if (score > bestMatch.score) {
+        bestMatch = { governorate: gov, score };
       }
     }
     
-    return null;
+    // إرجاع النتيجة فقط إذا كانت النقاط كافية
+    return bestMatch.score >= 1 ? bestMatch.governorate : null;
   };
 
-  // فلترة أخبار المحافظات مع تحسين التصنيف
+  // فلترة أخبار المحافظات مع نظام تصنيف ذكي محسن
   const governoratesArticles = useMemo(() => {
     let filteredArticles = articles.filter(article => {
-      // التحقق من الفئة أولاً
-      if (article.category === "محافظات") return true;
+      // استبعاد المقالات الإعلانية أو غير المناسبة
+      const isAdvertisement = article.title.toLowerCase().includes('only available in paid plans') ||
+                             article.content.toLowerCase().includes('subscription required') ||
+                             !article.title || article.title.length < 10;
       
-      // ثم التحقق من المحتوى
+      if (isAdvertisement) return false;
+      
+      // التحقق من الفئة أولاً
+      if (article.category === "محافظات") {
+        // تحسين الصورة إذا لم تكن مناسبة
+        if (!article.image || article.image.includes('placeholder')) {
+          article.image = improveImageExtraction(article);
+        }
+        return true;
+      }
+      
+      // استخدام النظام الذكي للتصنيف
       const detectedGov = categorizeArticleByGovernorate(article);
       if (detectedGov) {
-        // تحديث فئة المقال تلقائياً إذا لم تكن محافظات
-        if (article.category !== "محافظات") {
-          article.category = "محافظات";
-          (article as any).governorate = detectedGov;
-        }
+        // تحديث فئة المقال تلقائياً
+        article.category = "محافظات";
+        (article as any).governorate = detectedGov;
+        // تحسين الصورة
+        article.image = improveImageExtraction(article);
         return true;
       }
       
