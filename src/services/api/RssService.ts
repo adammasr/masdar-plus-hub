@@ -120,7 +120,7 @@ export class RssService {
   /**
    * جلب وتحليل تغذية RSS واحدة
    */
-  private async fetchFeed(feedUrl: string): Promise<NewsItem[]> {
+  private async fetchFeed(feedUrl: string, retryCount: number = 0): Promise<NewsItem[]> {
     try {
       // استخدام عدة خدمات proxy كبديل في حالة فشل إحداها
       const proxyServices = [
@@ -135,11 +135,15 @@ export class RssService {
       for (const proxyUrl of proxyServices) {
         try {
           response = await axios.get(proxyUrl, {
-            timeout: 8000,
+            timeout: 12000, // زيادة المهلة الزمنية
             headers: {
               'Accept': 'application/json',
-              'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'
-            }
+              'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)',
+              'Cache-Control': 'no-cache'
+            },
+            // إعدادات إضافية لتحسين الاتصال
+            maxRedirects: 5,
+            validateStatus: (status) => status < 500 // قبول الأخطاء 4xx ولكن إعادة المحاولة مع 5xx
           });
           
           // التحقق من نجاح الاستجابة
@@ -168,7 +172,7 @@ export class RssService {
           }
         } catch (error) {
           lastError = error;
-          console.warn(`فشل في استخدام proxy: ${proxyUrl}`, error.message);
+          console.warn(`فشل في استخدام proxy: ${proxyUrl} (المحاولة ${retryCount + 1})`, error.message);
           continue;
         }
       }
@@ -219,7 +223,14 @@ export class RssService {
       
       return newsItems;
     } catch (error) {
-      console.error(`خطأ في جلب تغذية RSS من ${feedUrl}:`, error);
+      // إعادة المحاولة في حالة خطأ الشبكة
+      if (retryCount < 2 && (error.code === 'ECONNRESET' || error.code === 'ENOTFOUND' || error.message.includes('Network Error'))) {
+        console.warn(`إعادة محاولة جلب RSS من ${feedUrl} (المحاولة ${retryCount + 1})`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * (retryCount + 1))); // انتظار متزايد
+        return this.fetchFeed(feedUrl, retryCount + 1);
+      }
+      
+      console.error(`خطأ نهائي في جلب تغذية RSS من ${feedUrl} بعد ${retryCount + 1} محاولات:`, error.message);
       // إرجاع مصفوفة فارغة بدلاً من رمي الخطأ لتجنب توقف العملية
       return [];
     }
