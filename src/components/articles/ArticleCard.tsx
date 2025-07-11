@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Article } from "../../context/ArticleContext";
 import { Play, Clock, Flame, ExternalLink, Globe } from "lucide-react";
@@ -40,31 +39,31 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
   const cleanTitle = (title: string): string => {
     return title
       // إزالة التواريخ والأوقات
-      .replace(/\d{1,2}‏\/\d{1,2}‏\/\d{2,4}\s*\d{1,2}:\d{1,2}:\d{1,2}\s*(ص|م)/g, '')
-      .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, '')
-      .replace(/\d{1,2}-\d{1,2}-\d{2,4}/g, '')
+      .replace(/\d{1,2}‏\/\d{1,2}‏\/\d{2,4}\s*\d{1,2}:\d{1,2}:\d{1,2}\s*(ص|م)/g, "")
+      .replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, "")
+      .replace(/\d{1,2}-\d{1,2}-\d{2,4}/g, "")
       // إزالة المصادر غير المرغوب فيها
-      .replace(/من مصادر RSS/gi, '')
-      .replace(/أخبار عاجلة من مصادر RSS/gi, '')
-      .replace(/منشور جديد من صفحة فيسبوك/gi, '')
-      .replace(/خبر من صفحات فيسبوك/gi, '')
-      .replace(/من مصدر RSS/gi, '')
-      .replace(/عاجل:/gi, '')
-      .replace(/حصري/gi, '')
-      .replace(/Breaking/gi, '')
-      .replace(/\|\s*مصدر\s*بلس/gi, '')
+      .replace(/من مصادر RSS/gi, "")
+      .replace(/أخبار عاجلة من مصادر RSS/gi, "")
+      .replace(/منشور جديد من صفحة فيسبوك/gi, "")
+      .replace(/خبر من صفحات فيسبوك/gi, "")
+      .replace(/من مصدر RSS/gi, "")
+      .replace(/عاجل:/gi, "")
+      .replace(/حصري/gi, "")
+      .replace(/Breaking/gi, "")
+      .replace(/\|\s*مصدر\s*بلس/gi, "")
       // تنظيف عام
-      .replace(/-\s*$/g, '')
-      .replace(/\s+/g, ' ')
+      .replace(/-\s*$/g, "")
+      .replace(/\s+/g, " ")
       .trim();
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('ar-EG', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric'
+    return date.toLocaleDateString("ar-EG", { 
+      year: "numeric", 
+      month: "long", 
+      day: "numeric"
     });
   };
 
@@ -75,14 +74,14 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
       className={`
         news-card group bg-white rounded-2xl overflow-hidden shadow-lg
         hover:shadow-2xl transition-all duration-300 border border-gray-100
-        ${featured ? 'md:flex relative min-h-[260px] md:min-h-[220px] bg-gradient-to-r from-[#fff7f7] to-white' : ''}
+        ${featured ? "md:flex relative min-h-[260px] md:min-h-[220px] bg-gradient-to-r from-[#fff7f7] to-white" : ""}
       `}
     >
       {/* صورة مع lazy loading */}
-      <div className={`relative ${featured ? 'md:w-2/5 min-h-[220px]' : 'h-52'} flex-shrink-0`}>
+      <div className={`relative ${featured ? "md:w-2/5 min-h-[220px]" : "h-52"} flex-shrink-0`}>
         <div 
           ref={imgRef}
-          className={`absolute inset-0 bg-gray-200 animate-pulse rounded-xl transition-all duration-500 ${imgLoaded ? 'opacity-0' : 'opacity-100'}`} 
+          className={`absolute inset-0 bg-gray-200 animate-pulse rounded-xl transition-all duration-500 ${imgLoaded ? "opacity-0" : "opacity-100"}`} 
         />
         {imgInView && (
           <img
@@ -90,8 +89,8 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
             alt={displayTitle}
             className={`
               w-full h-full object-cover rounded-xl transition-all duration-700
-              ${imgLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}
-              ${featured ? 'md:h-full h-52' : 'h-52'}
+              ${imgLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"}
+              ${featured ? "md:h-full h-52" : "h-52"}
             `}
             loading="lazy"
             onLoad={() => setImgLoaded(true)}
@@ -122,7 +121,7 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
           )}
         </div>
         
-        {source && source !== 'محرر يدويًا' && (
+        {source && source !== "محرر يدويًا" && (
           <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1">
             <Badge variant="outline" className="bg-white/85 text-gray-700 text-xs flex items-center gap-1 px-2 py-1 shadow">
               <ExternalLink className="w-3 h-3 text-gray-500" /> {source}
@@ -132,11 +131,11 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
       </div>
       
       {/* محتوى الخبر */}
-      <div className={`p-5 flex flex-col justify-between ${featured ? 'md:w-3/5' : ''}`}>
+      <div className={`p-5 flex flex-col justify-between ${featured ? "md:w-3/5" : ""}`}>
         <div>
           <h3 className={`
             font-bold text-gray-900 group-hover:text-news-accent transition-colors
-            ${featured ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}
+            ${featured ? "text-2xl md:text-3xl" : "text-xl md:text-2xl"}
             line-clamp-2
           `}>
             <Link to={detailUrl} className="hover:text-news-accent">
@@ -176,7 +175,7 @@ const ArticleCard = ({ article, featured = false, detailUrl }: ArticleCardProps)
         </div>
       </div>
     </div>
-  );
+   );
 };
 
 export default ArticleCard;
