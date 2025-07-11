@@ -13,7 +13,7 @@ export interface RewriteRequest {
 export class GeminiService {
   private static instance: GeminiService | null = null;
   private genAI: GoogleGenerativeAI;
-  private apiKey: string = 'AIzaSyAzQEejlpDswE6uoLVWUkUgSh_VNT0FlP0';
+  private apiKey: string = 'AIzaSyB2uJu-aNU95syWABKZ9pDeBvXNrsrFIH8';
 
   private constructor() {
     this.genAI = new GoogleGenerativeAI(this.apiKey);
