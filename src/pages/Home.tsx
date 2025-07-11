@@ -1,8 +1,7 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useArticles } from "../context/ArticleContext";
 import FeaturedArticles from "../components/articles/FeaturedArticles";
-import { TrendingUp, PieChart, Video, Brain, Shield, Globe } from "lucide-react";
+import { TrendingUp, PieChart, Video, Brain, Shield, Globe, Car, Cpu, Palette, FlaskConical, GraduationCap, AlertTriangle } from "lucide-react";
 import { AdSlot } from "../components/ads/AdService";
 
 // Import refactored components
@@ -106,6 +105,84 @@ const Home = () => {
         .slice(0, 4),
     [articles]
   );
+
+  // الأقسام الجديدة
+  const sportsNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "رياضة" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const artNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "فن وثقافة" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const carNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "سيارات" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const techNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "تكنولوجيا" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const scienceNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "علوم" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const universityNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "جامعات وتعليم" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
+
+  const accidentNews = useMemo(
+    () =>
+      articles
+        .filter(
+          (a) => a.category === "حوادث" && new Date(a.date) >= startSyncDate
+        )
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 4),
+    [articles]
+  );
   
   const videoArticles = useMemo(
     () =>
@@ -198,6 +275,93 @@ const Home = () => {
           linkPath="/world" 
         />
       </div>
+
+      {/* إعلان بين الأقسام */}
+      <AdSlot position="article" className="my-8" />
+
+      {/* Additional Categories Grid - Sports, Arts, Cars */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        {/* Sports News */}
+        {sportsNews.length > 0 && (
+          <CategorySection 
+            title="الرياضة" 
+            icon={TrendingUp} 
+            articles={sportsNews} 
+            linkPath="/sports" 
+          />
+        )}
+        
+        {/* Art & Culture News */}
+        {artNews.length > 0 && (
+          <CategorySection 
+            title="فن وثقافة" 
+            icon={Palette} 
+            articles={artNews} 
+            linkPath="/art" 
+          />
+        )}
+        
+        {/* Car News */}
+        {carNews.length > 0 && (
+          <CategorySection 
+            title="سيارات" 
+            icon={Car} 
+            articles={carNews} 
+            linkPath="/cars" 
+          />
+        )}
+      </div>
+
+      {/* إعلان بين الأقسام */}
+      <AdSlot position="article" className="my-8" />
+
+      {/* Technology, Science, Education Categories */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        {/* Technology News */}
+        {techNews.length > 0 && (
+          <CategorySection 
+            title="تكنولوجيا" 
+            icon={Cpu} 
+            articles={techNews} 
+            linkPath="/technology" 
+          />
+        )}
+        
+        {/* Science News */}
+        {scienceNews.length > 0 && (
+          <CategorySection 
+            title="علوم" 
+            icon={FlaskConical} 
+            articles={scienceNews} 
+            linkPath="/science" 
+          />
+        )}
+        
+        {/* University & Education News */}
+        {universityNews.length > 0 && (
+          <CategorySection 
+            title="جامعات وتعليم" 
+            icon={GraduationCap} 
+            articles={universityNews} 
+            linkPath="/education" 
+          />
+        )}
+      </div>
+
+      {/* إعلان بين الأقسام */}
+      <AdSlot position="article" className="my-8" />
+
+      {/* Accidents Section */}
+      {accidentNews.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+          <CategorySection 
+            title="حوادث" 
+            icon={AlertTriangle} 
+            articles={accidentNews} 
+            linkPath="/accidents" 
+          />
+        </div>
+      )}
 
       {/* إعلان أسفل الصفحة */}
       <AdSlot position="footer" className="mt-8" />
