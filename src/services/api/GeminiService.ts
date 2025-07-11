@@ -1,4 +1,3 @@
-
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface RewriteRequest {
@@ -50,9 +49,15 @@ export class GeminiService {
 - اقتصاد  
 - محافظات
 - ذكاء اصطناعي
+- تكنولوجيا
 - عسكرية
 - العالم
 - رياضة
+- فن وثقافة
+- سيارات
+- علوم
+- جامعات وتعليم
+- حوادث
 - أخبار
 
 المحتوى: "${content.substring(0, 500)}"
@@ -65,7 +70,7 @@ export class GeminiService {
       const category = response.text().trim();
       
       // التحقق من صحة الفئة
-      const validCategories = ['سياسة', 'اقتصاد', 'محافظات', 'ذكاء اصطناعي', 'عسكرية', 'العالم', 'رياضة', 'أخبار'];
+      const validCategories = ['سياسة', 'اقتصاد', 'محافظات', 'ذكاء اصطناعي', 'تكنولوجيا', 'عسكرية', 'العالم', 'رياضة', 'فن وثقافة', 'سيارات', 'علوم', 'جامعات وتعليم', 'حوادث', 'أخبار'];
       
       if (validCategories.includes(category)) {
         return category;
@@ -94,14 +99,32 @@ export class GeminiService {
     if (lowerContent.includes('محافظة') || lowerContent.includes('المنوفية') || lowerContent.includes('القاهرة')) {
       return 'محافظات';
     }
-    if (lowerContent.includes('ذكاء اصطناعي') || lowerContent.includes('تكنولوجيا') || lowerContent.includes('ai')) {
+    if (lowerContent.includes('ذكاء اصطناعي') || lowerContent.includes('ai') || lowerContent.includes('machine learning')) {
       return 'ذكاء اصطناعي';
+    }
+    if (lowerContent.includes('تكنولوجيا') || lowerContent.includes('تقني') || lowerContent.includes('إنترنت') || lowerContent.includes('كمبيوتر')) {
+      return 'تكنولوجيا';
     }
     if (lowerContent.includes('جيش') || lowerContent.includes('عسكري') || lowerContent.includes('أمن')) {
       return 'عسكرية';
     }
-    if (lowerContent.includes('رياضة') || lowerContent.includes('كرة') || lowerContent.includes('أولمبياد')) {
+    if (lowerContent.includes('رياضة') || lowerContent.includes('كرة') || lowerContent.includes('أولمبياد') || lowerContent.includes('مباراة')) {
       return 'رياضة';
+    }
+    if (lowerContent.includes('فن') || lowerContent.includes('ثقافة') || lowerContent.includes('مسرح') || lowerContent.includes('سينما') || lowerContent.includes('موسيق')) {
+      return 'فن وثقافة';
+    }
+    if (lowerContent.includes('سيارة') || lowerContent.includes('سيارات') || lowerContent.includes('محرك') || lowerContent.includes('مركبة')) {
+      return 'سيارات';
+    }
+    if (lowerContent.includes('علم') || lowerContent.includes('بحث') || lowerContent.includes('اكتشاف') || lowerContent.includes('دراسة')) {
+      return 'علوم';
+    }
+    if (lowerContent.includes('جامعة') || lowerContent.includes('طلاب') || lowerContent.includes('تعليم') || lowerContent.includes('مدرسة')) {
+      return 'جامعات وتعليم';
+    }
+    if (lowerContent.includes('حادث') || lowerContent.includes('إصابة') || lowerContent.includes('وفاة') || lowerContent.includes('طوارئ')) {
+      return 'حوادث';
     }
     if (lowerContent.includes('دولي') || lowerContent.includes('عالمي') || lowerContent.includes('أمريكا')) {
       return 'العالم';
@@ -210,16 +233,16 @@ export class GeminiService {
   private enhanceOriginalText(originalText: string, category: string): string {
     // إضافة مقدمة بسيطة حسب الفئة
     const introMap: Record<string, string> = {
-      'سياسة': 'في تطور سياسي مهم،',
-      'اقتصاد': 'على الصعيد الاقتصادي،',
-      'محافظات': 'في إطار أخبار المحافظات،',
-      'ذكاء اصطناعي': 'في عالم التكنولوجيا،',
-      'عسكرية': 'على الصعيد الأمني،',
-      'العالم': 'في التطورات العالمية،',
-      'رياضة': 'في الأوساط الرياضية،'
+      'سياسة': 'في تطور سياسي مهم,',
+      'اقتصاد': 'على الصعيد الاقتصادي,',
+      'محافظات': 'في إطار أخبار المحافظات,',
+      'ذكاء اصطناعي': 'في عالم التكنولوجيا,',
+      'عسكرية': 'على الصعيد الأمني,',
+      'العالم': 'في التطورات العالمية,',
+      'رياضة': 'في الأوساط الرياضية,'
     };
     
-    const intro = introMap[category] || 'في آخر التطورات،';
+    const intro = introMap[category] || 'في آخر التطورات,';
     
     return `${intro} ${originalText}
 
