@@ -41,7 +41,7 @@ export class GeminiService {
    */
   public async classifyContent(content: string): Promise<string> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const prompt = `
 حدد الفئة الأنسب لهذا المحتوى الإخباري من الفئات التالية:
@@ -138,7 +138,7 @@ export class GeminiService {
    */
   public async rewriteContent(request: RewriteRequest): Promise<string> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const prompt = this.buildRewritePrompt(request);
       const result = await model.generateContent(prompt);
@@ -254,7 +254,7 @@ export class GeminiService {
    */
   public async generateTitle(content: string, category: string): Promise<string> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
       const prompt = `
 اكتب عنواناً جذاباً وقصيراً (أقل من 80 حرف) لهذا الخبر:

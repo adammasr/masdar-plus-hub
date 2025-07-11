@@ -122,19 +122,60 @@ export class RssService {
    */
   private async fetchFeed(feedUrl: string): Promise<NewsItem[]> {
     try {
-      // استخدام proxy لتجنب مشاكل CORS
-      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl )}`;
+      // استخدام عدة خدمات proxy كبديل في حالة فشل إحداها
+      const proxyServices = [
+        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`,
+        `https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`,
+        `https://cors-anywhere.herokuapp.com/${feedUrl}`
+      ];
       
-      const response = await axios.get(proxyUrl, {
-        timeout: 10000,
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'
+      let response;
+      let lastError;
+      
+      // محاولة استخدام خدمات proxy مختلفة
+      for (const proxyUrl of proxyServices) {
+        try {
+          response = await axios.get(proxyUrl, {
+            timeout: 8000,
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0 (compatible; NewsBot/1.0)'
+            }
+          });
+          
+          // التحقق من نجاح الاستجابة
+          if (proxyUrl.includes('rss2json')) {
+            if (response.data.status === 'ok') {
+              break;
+            } else {
+              throw new Error(`خطأ في تحليل RSS: ${response.data.message}`);
+            }
+          } else if (proxyUrl.includes('allorigins')) {
+            if (response.data.contents) {
+              // تحليل XML من allorigins
+              const xmlData = response.data.contents;
+              const parsedData = await parseStringPromise(xmlData);
+              response.data = this.convertXmlToRssJson(parsedData);
+              break;
+            } else {
+              throw new Error('لا توجد بيانات من allorigins');
+            }
+          } else {
+            // cors-anywhere - تحليل XML مباشرة
+            const xmlData = response.data;
+            const parsedData = await parseStringPromise(xmlData);
+            response.data = this.convertXmlToRssJson(parsedData);
+            break;
+          }
+        } catch (error) {
+          lastError = error;
+          console.warn(`فشل في استخدام proxy: ${proxyUrl}`, error.message);
+          continue;
         }
-      });
+      }
       
-      if (response.data.status !== 'ok') {
-        throw new Error(`خطأ في تحليل RSS: ${response.data.message}`);
+      if (!response) {
+        throw lastError || new Error('فشل في جلب البيانات من جميع خدمات الـ proxy');
       }
       
       const items = response.data.items || [];
@@ -180,7 +221,36 @@ export class RssService {
       return newsItems;
     } catch (error) {
       console.error(`خطأ في جلب تغذية RSS من ${feedUrl}:`, error);
-      throw error;
+      // إرجاع مصفوفة فارغة بدلاً من رمي الخطأ لتجنب توقف العملية
+      return [];
+    }
+  }
+
+  /**
+   * تحويل XML المحلل إلى تنسيق RSS JSON
+   */
+  private convertXmlToRssJson(parsedXml: any): any {
+    try {
+      const channel = parsedXml.rss?.channel?.[0] || parsedXml.feed;
+      const items = channel?.item || channel?.entry || [];
+      
+      return {
+        status: 'ok',
+        feed: {
+          title: channel?.title?.[0] || 'RSS Feed'
+        },
+        items: items.map((item: any) => ({
+          title: item.title?.[0] || item.title?._ || '',
+          description: item.description?.[0] || item.summary?.[0] || '',
+          link: item.link?.[0] || item.link?.$.href || '',
+          pubDate: item.pubDate?.[0] || item.published?.[0] || new Date().toISOString(),
+          enclosure: item.enclosure?.[0] ? { link: item.enclosure[0].$.url } : null,
+          thumbnail: item['media:thumbnail']?.[0]?.$.url || ''
+        }))
+      };
+    } catch (error) {
+      console.error('خطأ في تحويل XML:', error);
+      return { status: 'error', items: [] };
     }
   }
 
