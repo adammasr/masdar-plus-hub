@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { SunMoon } from "lucide-react";
 import { useState } from "react";
@@ -41,10 +40,52 @@ const Navigation = () => {
           الاقتصاد
         </Link>
         <Link
+          to="/sports"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          رياضة
+        </Link>
+        <Link
+          to="/technology"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          تكنولوجيا
+        </Link>
+        <Link
+          to="/cars"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          سيارات
+        </Link>
+        <Link
           to="/videos"
           className="hover:text-news-accent text-gray-600 font-medium"
         >
           فيديوهات
+        </Link>
+        <Link
+          to="/art"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          فن وثقافة
+        </Link>
+        <Link
+          to="/science"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          علوم
+        </Link>
+        <Link
+          to="/education"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          جامعات وتعليم
+        </Link>
+        <Link
+          to="/accidents"
+          className="hover:text-news-accent text-gray-600 font-medium"
+        >
+          حوادث
         </Link>
       </div>
       <button
