@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import { NewsItem } from '../../types/NewsItem';
@@ -25,6 +24,7 @@ export class RssService {
     // تغذيات RSS محسنة للمحتوى العربي
     this.config = {
       feeds: [
+        // المصادر الأساسية
         'https://www.aljazeera.net/aje/articles/rss.xml',
         'https://arabic.cnn.com/api/v1/rss/rss.xml',
         'https://www.bbc.com/arabic/rss.xml',
@@ -34,13 +34,33 @@ export class RssService {
         'https://www.youm7.com/rss',
         'https://www.masrawy.com/rss/rssfeeds',
         'https://feed.informer.com/digests/7HUZFNOFWB/feeder.rss',
-        'https://feed.informer.com/digests/ITT2WR6G42/feeder.rss'
+        'https://feed.informer.com/digests/ITT2WR6G42/feeder.rss',
+        
+        // مصادر الشروق نيوز المتخصصة
+        'https://www.shorouknews.com/Politics/arab/rss',
+        'https://www.shorouknews.com/Politics/world/rss',
+        'https://www.shorouknews.com/sports/local-sports/rss',
+        'https://www.shorouknews.com/sports/international/rss',
+        'https://www.shorouknews.com/art/rss',
+        'https://www.shorouknews.com/Economy/business/rss',
+        'https://www.shorouknews.com/accidents/rss',
+        'https://www.shorouknews.com/local/rss',
+        'https://www.shorouknews.com/variety/Internet-Comm/rss',
+        'https://www.shorouknews.com/variety/sciences/rss',
+        'https://www.shorouknews.com/universities/rss',
+        'https://www.shorouknews.com/auto/rss',
+        
+        // مصادر إضافية
+        'https://www.cairo24.com/rss.aspx',
+        'https://www.dostor.org/rss.aspx',
+        'https://www.elfagr.org/rss.aspx',
+        'https://www.elbalad.news/rss.aspx'
       ],
       fetchInterval: 30, // كل نصف ساعة
       maxItemsPerFeed: 8
     };
     
-    this.geminiService = GeminiService.getInstance();
+    this.geminiService = GeminiService.getInstance( );
     this.imageService = ImageService.getInstance();
   }
 
@@ -103,7 +123,7 @@ export class RssService {
   private async fetchFeed(feedUrl: string): Promise<NewsItem[]> {
     try {
       // استخدام proxy لتجنب مشاكل CORS
-      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl)}`;
+      const proxyUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feedUrl )}`;
       
       const response = await axios.get(proxyUrl, {
         timeout: 10000,
@@ -183,19 +203,76 @@ export class RssService {
   }
 
   /**
-   * تصنيف المحتوى تلقائياً
+   * تصنيف المحتوى تلقائياً مع دعم الأقسام الجديدة
    */
   private classifyContent(title: string, content: string): string {
     const fullText = (title + ' ' + content).toLowerCase();
     
-    if (fullText.includes('سياس') || fullText.includes('حكوم') || fullText.includes('رئيس') || fullText.includes('وزير')) {
+    // تصنيف حسب رابط المصدر أولاً (أكثر دقة)
+    const sourceUrl = this.getCurrentSourceUrl();
+    if (sourceUrl) {
+      if (sourceUrl.includes('/Politics/') || sourceUrl.includes('politics')) {
+        return 'سياسة';
+      }
+      if (sourceUrl.includes('/Economy/') || sourceUrl.includes('/business/')) {
+        return 'اقتصاد';
+      }
+      if (sourceUrl.includes('/sports/')) {
+        return 'رياضة';
+      }
+      if (sourceUrl.includes('/art/')) {
+        return 'فن وثقافة';
+      }
+      if (sourceUrl.includes('/auto/')) {
+        return 'سيارات';
+      }
+      if (sourceUrl.includes('/Internet-Comm/') || sourceUrl.includes('tech')) {
+        return 'تكنولوجيا';
+      }
+      if (sourceUrl.includes('/sciences/')) {
+        return 'علوم';
+      }
+      if (sourceUrl.includes('/universities/')) {
+        return 'جامعات وتعليم';
+      }
+      if (sourceUrl.includes('/accidents/')) {
+        return 'حوادث';
+      }
+      if (sourceUrl.includes('/local/')) {
+        return 'محافظات';
+      }
+      if (sourceUrl.includes('/world/')) {
+        return 'العالم';
+      }
+    }
+    
+    // التصنيف بناءً على المحتوى
+    if (fullText.includes('سياس') || fullText.includes('حكوم') || fullText.includes('رئيس') || fullText.includes('وزير') || fullText.includes('برلمان')) {
       return 'سياسة';
     }
-    if (fullText.includes('اقتصاد') || fullText.includes('مال') || fullText.includes('بنك') || fullText.includes('استثمار')) {
+    if (fullText.includes('اقتصاد') || fullText.includes('مال') || fullText.includes('بنك') || fullText.includes('استثمار') || fullText.includes('بورصة')) {
       return 'اقتصاد';
     }
-    if (fullText.includes('ذكاء اصطناعي') || fullText.includes('تكنولوجيا') || fullText.includes('تقني')) {
-      return 'ذكاء اصطناعي';
+    if (fullText.includes('رياض') || fullText.includes('كرة') || fullText.includes('مباراة') || fullText.includes('لاعب') || fullText.includes('نادي')) {
+      return 'رياضة';
+    }
+    if (fullText.includes('فن') || fullText.includes('مسرح') || fullText.includes('سينما') || fullText.includes('موسيق') || fullText.includes('فنان')) {
+      return 'فن وثقافة';
+    }
+    if (fullText.includes('سيارة') || fullText.includes('سيارات') || fullText.includes('محرك') || fullText.includes('مركبة')) {
+      return 'سيارات';
+    }
+    if (fullText.includes('ذكاء اصطناعي') || fullText.includes('تكنولوجيا') || fullText.includes('تقني') || fullText.includes('إنترنت') || fullText.includes('كمبيوتر')) {
+      return 'تكنولوجيا';
+    }
+    if (fullText.includes('علم') || fullText.includes('بحث') || fullText.includes('اكتشاف') || fullText.includes('دراسة')) {
+      return 'علوم';
+    }
+    if (fullText.includes('جامعة') || fullText.includes('طلاب') || fullText.includes('تعليم') || fullText.includes('مدرسة')) {
+      return 'جامعات وتعليم';
+    }
+    if (fullText.includes('حادث') || fullText.includes('إصابة') || fullText.includes('وفاة') || fullText.includes('طوارئ')) {
+      return 'حوادث';
     }
     if (fullText.includes('عسكري') || fullText.includes('جيش') || fullText.includes('دفاع') || fullText.includes('أمن')) {
       return 'عسكرية';
@@ -208,6 +285,14 @@ export class RssService {
     }
     
     return 'أخبار';
+  }
+
+  /**
+   * الحصول على رابط المصدر الحالي (مساعد للتصنيف)
+   */
+  private getCurrentSourceUrl(): string | null {
+    // هذه دالة مساعدة، سيتم تحديثها لاحقاً لتتبع المصدر الحالي
+    return null;
   }
 
   /**
