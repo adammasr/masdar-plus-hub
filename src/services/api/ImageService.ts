@@ -1,5 +1,3 @@
-
-// تحسين خدمة جلب الصور للأخبار
 import axios from 'axios';
 import { NewsItem } from '../../types/NewsItem';
 
@@ -32,6 +30,11 @@ export class ImageService {
       'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=60',
       'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&auto=format&fit=crop&q=60'
     ],
+    'تكنولوجيا': [
+      'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=60'
+    ],
     'عسكرية': [
       'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?w=800&auto=format&fit=crop&q=60',
       'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop&q=60',
@@ -42,6 +45,36 @@ export class ImageService {
       'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=800&auto=format&fit=crop&q=60',
       'https://images.unsplash.com/photo-1457464901128-858c524a9b7b?w=800&auto=format&fit=crop&q=60'
     ],
+    'رياضة': [
+      'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&auto=format&fit=crop&q=60'
+    ],
+    'فن وثقافة': [
+      'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=800&auto=format&fit=crop&q=60'
+    ],
+    'سيارات': [
+      'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1494976688153-c91c18981875?w=800&auto=format&fit=crop&q=60'
+    ],
+    'علوم': [
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1518152006812-edab29b069ac?w=800&auto=format&fit=crop&q=60'
+    ],
+    'جامعات وتعليم': [
+      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1562774053-701939374585?w=800&auto=format&fit=crop&q=60'
+    ],
+    'حوادث': [
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60',
+      'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=800&auto=format&fit=crop&q=60'
+    ],
     'أخبار': [
       'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&auto=format&fit=crop&q=60',
       'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&auto=format&fit=crop&q=60',
@@ -49,7 +82,7 @@ export class ImageService {
     ]
   };
 
-  private constructor() {}
+  private constructor( ) {}
 
   /**
    * الحصول على نسخة واحدة من الخدمة (نمط Singleton)
@@ -85,7 +118,7 @@ export class ImageService {
    * التحقق من صلاحية رابط الصورة
    */
   public async isImageValid(imageUrl: string): Promise<boolean> {
-    if (!imageUrl || !imageUrl.startsWith('http')) {
+    if (!imageUrl || !imageUrl.startsWith('http' )) {
       return false;
     }
 
